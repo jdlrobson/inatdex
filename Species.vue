@@ -33,10 +33,12 @@ export default {
     height: 100px;
     object-fit: cover;
     opacity: 0.3;
+    filter: grayscale(1);
     border-radius: 200px;
 }
 
 .species__photo--seen {
     opacity: 1;
+    filter: none;
 }
 </style>
