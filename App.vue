@@ -7,7 +7,7 @@
                 <option value="4181">birds of golden gate park</option> 
                 <option value="birds-of-presidio">birds of presidio</option>
             </select>
-            Username: <input type="text" v-model="username" @blur="loadSeenByUser">
+            Username: <input type="text" v-model="username" name="username" @blur="loadSeenByUser">
             <input type="submit" value="Show iNatDex">
         </form>
         <header v-if="enabled">
