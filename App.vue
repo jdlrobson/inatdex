@@ -20,6 +20,7 @@
                 @click="toggleSelected"
                 :key="i"
                 :name="item.name"
+                :url="item.url"
                 :count="item.count"
                 :seen="seen && seen.includes(item.name)"
                 :photo="item.photo"
@@ -28,6 +29,7 @@
         <footer v-if="selected">
             <h2>{{ selected }}</h2>
             <p>{{ seenMessage }}</p>
+            <a :href="url">View observations</a>
         </footer>
         <button @click="reset">Try a different location or username</button>
     </div>
@@ -42,6 +44,7 @@ export default {
     data() {
         return {
             selected: '',
+            url: '',
             count: 0,
             username: null,
             items: null,
@@ -77,8 +80,9 @@ export default {
                     return this.project_id.replace(/-/g, ' ');
             }
         },
-        toggleSelected( selection, count ) {
+        toggleSelected( selection, count, url ) {
             this.count = count;
+            this.url = url;
             if ( selection !== this.selected ) {
                 this.selected = selection;
             } else {
@@ -118,6 +122,7 @@ export default {
                     return d.results.sort((r1, r2) => r1.count > r2.count ? -1 : 1 ).map((r) => {
                         const taxon = r.taxon;
                         return {
+                            url: `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&subview=map&taxon_id=${taxon.id}&verifiable=any`,
                             count: r.count,
                             name: taxon.preferred_common_name,
                             photo: taxon.default_photo.medium_url

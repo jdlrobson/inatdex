@@ -12,7 +12,7 @@ export default {
     name: 'Species',
     methods: {
         clicked() {
-            this.$emit( 'click', this.name, this.count );
+            this.$emit( 'click', this.name, this.count, this.url );
         }
     },
     computed: {
@@ -26,6 +26,7 @@ export default {
     props: {
         count: Number,
         seen: Boolean,
+        url: String,
         name: String,
         photo: String
     }
