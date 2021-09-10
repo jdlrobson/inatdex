@@ -1,5 +1,5 @@
 <template>
-    <div class="species">
+    <div class="species" @click="clicked">
         <img :src="photo" :alt="name"
             :class="photoClasses"
             :title="name">
@@ -10,6 +10,11 @@
 
 export default {
     name: 'Species',
+    methods: {
+        clicked() {
+            this.$emit( 'click', this.name, this.count );
+        }
+    },
     computed: {
         photoClasses() {
             return {
@@ -19,6 +24,7 @@ export default {
         }
     },
     props: {
+        count: Number,
         seen: Boolean,
         name: String,
         photo: String

@@ -17,12 +17,18 @@
         </header>
         <div class="species-grid" v-if="items">
             <species v-for="(item, i) in items"
+                @click="toggleSelected"
                 :key="i"
                 :name="item.name"
+                :count="item.count"
                 :seen="seen && seen.includes(item.name)"
                 :photo="item.photo"
             ></species>
         </div>
+        <footer v-if="selected">
+            <h2>{{ selected }}</h2>
+            <p>{{ seenMessage }}</p>
+        </footer>
         <button @click="reset">Try a different location or username</button>
     </div>
 </template>
@@ -35,6 +41,8 @@ export default {
     name: 'App',
     data() {
         return {
+            selected: '',
+            count: 0,
             username: null,
             items: null,
             project_id: null,
@@ -42,13 +50,16 @@ export default {
         };
     },
     computed: {
+        seenMessage() {
+            const project = this.getProjectName();
+           if ( this.count === 1 ) {
+               return `Observed once in ${project}`;
+           } else {
+               return `Observed ${this.count} times in ${project}`;
+           }
+        },
         projectName() {
-            switch ( this.project_id ) {
-                case '4181':
-                    return 'Golden Gate Park birds';
-                default:
-                    return this.project_id.replace(/-/g, ' ');
-            }
+            return this.getProjectName();
         },
         enabled() {
             return this.username !== null && this.project_id && this.seen !== null;
@@ -58,6 +69,22 @@ export default {
         Species
     },
     methods: {
+        getProjectName() {
+            switch ( this.project_id ) {
+                case '4181':
+                    return 'Golden Gate Park birds';
+                default:
+                    return this.project_id.replace(/-/g, ' ');
+            }
+        },
+        toggleSelected( selection, count ) {
+            this.count = count;
+            if ( selection !== this.selected ) {
+                this.selected = selection;
+            } else {
+                this.selected = '';
+            }
+        },
         loadiNatDex(ev) {
             ev.preventDefault();
             this.loadSeenByUser();
@@ -91,6 +118,7 @@ export default {
                     return d.results.sort((r1, r2) => r1.count > r2.count ? -1 : 1 ).map((r) => {
                         const taxon = r.taxon;
                         return {
+                            count: r.count,
                             name: taxon.preferred_common_name,
                             photo: taxon.default_photo.medium_url
                         }
@@ -186,5 +214,12 @@ em {
 button {
     margin: 10px auto auto;
     display: block;
+}
+
+footer {
+    position: sticky;
+    bottom: 0;
+    padding: 10px 40px;
+    background: #faf9ff;
 }
 </style>
