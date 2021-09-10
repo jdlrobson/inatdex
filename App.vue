@@ -1,6 +1,6 @@
 <template>
     <div class="app">
-        <form v-if="!enabled">
+        <form v-if="!enabled" @submit="loadiNatDex">
             Project: 
             <select name="project" v-model="project_id">
                 <option value="">none</option> 
@@ -8,6 +8,7 @@
                 <option value="birds-of-presidio">birds of presidio</option>
             </select>
             Username: <input type="text" v-model="username" @blur="loadSeenByUser">
+            <input type="submit" value="Show iNatDex">
         </form>
         <header v-if="enabled">
             <h2>iNatdex for {{username}}</h2>
@@ -57,6 +58,10 @@ export default {
         Species
     },
     methods: {
+        loadiNatDex(ev) {
+            ev.preventDefault();
+            this.loadSeenByUser();
+        },
         loadSeenByUser() {
             const project_id = this.project_id;
             const username = this.username;
