@@ -45,18 +45,17 @@
             <h2>{{ selected }}</h2>
             <p>{{ seenMessage }}</p>
             <a :href="url">View observations</a>
-            <div class="footer-seen">
+            <div class="footer-seen" v-if="username === '~'">
                 <input
-                    v-if="username === '~'"
                     type="checkbox"
                     id="mark-seen"
                     :checked="seen.includes(selected)"
                     @change="markSeen"/>
                 <label for="mark-seen">mark as seen (save privately to this device)</label>
+                <p class="footer-text">
+                    The iNatDex is more fun with an iNaturalist account and friends. <a href="https://www.inaturalist.org/signup">Sign up.</a>
+                </p>
             </div>
-            <p class="footer-text">
-                The iNatDex is more fun with an iNaturalist account and friends. <a href="https://www.inaturalist.org/signup">Sign up.</a>
-            </p>
             <a class="footer-close" @click="clearToggle">Close</a>
         </footer>
         <button v-if="isResetEnabled" class="btn-reset" @click="reset"
