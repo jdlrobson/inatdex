@@ -12,8 +12,8 @@
                 <button @click="setUsername">Next</button>
             </div>
             <div v-if="usernameSet && !project_id">
-                <label class="label-input">What project do you want to view?</label>
-                <h2>Choose a San Francisco Project</h2>
+                <p>Let's create an iNatDex (checklist) for {{username}}.</p>
+                <label class="label-input">Which San Francisco project shall we use?</label>
                 <button data-id="birds-of-ocean-beach" @click="selectProject">Ocean Beach</button>
                 <button data-id="animals-of-lands-end-san-francisco" @click="selectProject">Lands End</button>
                 <button data-id="birds-of-presidio" @click="selectProject">Birds of the Presidio</button>
@@ -30,7 +30,9 @@
             <h3>{{ projectName }}</h3>
             <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }}</em>
         </header>
+        <loader v-if="!items && enabled"></loader>
         <div class="species-grid" v-if="items" @click="clearToggle">
+            <loader v-if="!seen">s</loader>
             <species v-for="(item, i) in items"
                 @click="toggleSelected"
                 :key="i"
@@ -64,6 +66,7 @@
 </template>
 <script>
 import Species from './Species.vue';
+import Loader from './Loader.vue';
 
 const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
 
@@ -86,7 +89,7 @@ export default {
             return this.username === '~' ? 'your personal use' : this.username;
         },
         isResetEnabled() {
-            return this.username && this.project_id;
+            return this.username && this.project_id && this.seen && this.items;
         },
         seenMessage() {
             const project = this.getProjectName();
@@ -99,12 +102,16 @@ export default {
         projectName() {
             return this.getProjectName();
         },
+        isLoaded() {
+            return this.seen && this.items;
+        },
         enabled() {
-            return this.username !== null && this.project_id && this.seen !== null;
+            return this.username !== null && this.project_id;
         }
     },
     components: {
-        Species
+        Species,
+        Loader
     },
     methods: {
         clearToggle() {
@@ -168,8 +175,7 @@ export default {
             if ( !project_id || !username ) {
                 return;
             }
-            this.seen = [];
-            fetch(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
+            return fetch(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
                 .then((r) => r.json())
                 .then((r) => {
                     return r.results.map((r) => {
@@ -177,7 +183,7 @@ export default {
                     });
                 }).then((names) => {
                     this.seen = names;
-                })
+                });
         },
         reset() {
             this.items = null;
@@ -339,6 +345,10 @@ em {
     background: linear-gradient(180deg, #f6f2fe 0%, #caddff 100%); 
 }
 
+.species-grid .loader {
+    position: absolute;
+}
+
 input[type="submit"],
 button {
     cursor: pointer;
@@ -374,6 +384,11 @@ button:focus {
     background-color: white;
     color: #333;
     border-color: #ccc;
+    position: fixed;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    margin: auto;;
 }
 
 .btn-reset:hover {
