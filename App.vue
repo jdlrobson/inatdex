@@ -19,7 +19,7 @@
                 <button data-id="animals-of-lands-end-san-francisco" @click="selectProject">Lands End</button>
                 <button data-id="birds-of-presidio" @click="selectProject">Birds of the Presidio</button>
                 <button data-id="birds-of-fort-mason" @click="selectProject">Fort Mason</button>
-                <button data-id="4181" @click="selectProject">Birds of Golden Gate Park</button>
+                <button data-id="birds-of-golden-gate-park" @click="selectProject">Birds of Golden Gate Park</button>
                 <button data-id="animals-of-mount-sutro" @click="selectProject">Mount Sutro</button>
                 <button data-id="birds-of-lake-merced" @click="selectProject">Lake Merced</button>
                 <p class="footer-text">If you live outside San Francisco and want to include your own place, drop me a mail
@@ -29,7 +29,7 @@
         <header v-if="enabled">
             <h2>iNatdex for {{displayUsername}}</h2>
             <h3>{{ projectName }}</h3>
-            <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }}</em>
+            <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <a :href="leaderboard">📈</a></em>
         </header>
         <loader v-if="!items && enabled"></loader>
         <div class="species-grid" v-if="items" @click="clearToggle">
@@ -74,7 +74,7 @@ import Loader from './Loader.vue';
 
 const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
 
-const getRarity = ( min, max, count ) => {
+const getRarity = ( max, count ) => {
     const pc = Math.ceil( ( count / max ) * 100 );
     switch ( true ) {
         case pc > 80:
@@ -90,9 +90,9 @@ const getRarity = ( min, max, count ) => {
     }
 };
 
-const getHeader = ( countTotal, count, min, max ) => {
+const getHeader = ( countTotal, count, max ) => {
     const pc = Math.ceil(count / countTotal * 100);
-    return `${pc}% of observations here (${getRarity(min, max, count)})`;
+    return `${pc}% of observations here (${getRarity(max, count)})`;
 };
 
 export default {
@@ -115,8 +115,11 @@ export default {
         };
     },
     computed: {
+        leaderboard() {
+            return `https://www.inaturalist.org/projects/${this.project_id}?tab=observers`;
+        },
         rarity() {
-            return `${getHeader(this.totalLocalCount, this.count, this.min, this.max)}. Observed globally ${this.totalCount} times.`;
+            return `${getHeader(this.totalLocalCount, this.count, this.max)}. Observed globally ${this.totalCount} times.`;
         },
         displayUsername() {
             return this.username === '~' ? 'your personal use' : this.username;
@@ -174,12 +177,7 @@ export default {
             }
         },
         getProjectName() {
-            switch ( this.project_id ) {
-                case '4181':
-                    return 'Golden Gate Park birds';
-                default:
-                    return this.project_id.replace(/-/g, ' ');
-            }
+            return this.project_id.replace(/-/g, ' ');
         },
         toggleSelected( selection, data ) {
             this.count = data.count;
@@ -246,7 +244,6 @@ export default {
                     this.items = items;
                     const counts = this.items.map((c) => c.count);
                     this.max = Math.max.apply(null, counts);
-                    this.min = Math.min.apply(null, counts);
                     this.totalLocalCount = counts.reduce((previousValue, currentValue) => {
                         return previousValue + currentValue
                     }, 0);
