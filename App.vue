@@ -1,21 +1,36 @@
 <template>
     <div class="app">
         <form v-if="!enabled" @submit="loadiNatDex">
-            Project: 
-            <select name="project" v-model="project_id">
-                <option value="">none</option> 
-                <option value="4181">birds of golden gate park</option> 
-                <option value="birds-of-presidio">birds of presidio</option>
-            </select>
-            Username: <input type="text" v-model="username" name="username" @blur="loadSeenByUser">
-            <input type="submit" value="Show iNatDex">
+            <p>The iNatdex is an <a href="https://inaturalist.org">iNaturalist</a> companion app that tells you what species you have seen and haven't seen
+            in your favorite iNaturalist projects.</p>
+            <div v-if="!usernameSet">
+                <label class="label-input">Please enter your iNaturalist username:</label>
+                <input type="text" v-model="username"
+                    placeholder="Please enter your iNaturalist username"
+                    name="username" @blur="setUsername">
+                <p>Type "~" if you do not have an iNaturalist account.</p>
+                <button @click="setUsername">Next</button>
+            </div>
+            <div v-if="usernameSet && !project_id">
+                <label class="label-input">What project do you want to view?</label>
+                <h2>Choose a San Francisco Project</h2>
+                <button data-id="birds-of-ocean-beach" @click="selectProject">Ocean Beach</button>
+                <button data-id="animals-of-lands-end-san-francisco" @click="selectProject">Lands End</button>
+                <button data-id="birds-of-presidio" @click="selectProject">Birds of the Presidio</button>
+                <button data-id="birds-of-fort-mason" @click="selectProject">Fort Mason</button>
+                <button data-id="4181" @click="selectProject">Birds of Golden Gate Park</button>
+                <button data-id="animals-of-mount-sutro" @click="selectProject">Mount Sutro</button>
+                <button data-id="birds-of-lake-merced" @click="selectProject">Lake Merced</button>
+                <p class="footer-text">If you live outside San Francisco and want to include your own place, drop me a mail
+                    at jdlrobson@gmail.com</p>
+            </div>
         </form>
         <header v-if="enabled">
-            <h2>iNatdex for {{username}}</h2>
+            <h2>iNatdex for {{displayUsername}}</h2>
             <h3>{{ projectName }}</h3>
             <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }}</em>
         </header>
-        <div class="species-grid" v-if="items">
+        <div class="species-grid" v-if="items" @click="clearToggle">
             <species v-for="(item, i) in items"
                 @click="toggleSelected"
                 :key="i"
@@ -30,8 +45,22 @@
             <h2>{{ selected }}</h2>
             <p>{{ seenMessage }}</p>
             <a :href="url">View observations</a>
+            <div class="footer-seen">
+                <input
+                    v-if="username === '~'"
+                    type="checkbox"
+                    id="mark-seen"
+                    :checked="seen.includes(selected)"
+                    @change="markSeen"/>
+                <label for="mark-seen">mark as seen (save privately to this device)</label>
+            </div>
+            <p class="footer-text">
+                The iNatDex is more fun with an iNaturalist account and friends. <a href="https://www.inaturalist.org/signup">Sign up.</a>
+            </p>
+            <a class="footer-close" @click="clearToggle">Close</a>
         </footer>
-        <button @click="reset">Try a different location or username</button>
+        <button v-if="isResetEnabled" class="btn-reset" @click="reset"
+            >Try a different location or username</button>
     </div>
 </template>
 <script>
@@ -43,6 +72,7 @@ export default {
     name: 'App',
     data() {
         return {
+            usernameSet: false,
             selected: '',
             url: '',
             count: 0,
@@ -53,6 +83,12 @@ export default {
         };
     },
     computed: {
+        displayUsername() {
+            return this.username === '~' ? 'your personal use' : this.username;
+        },
+        isResetEnabled() {
+            return this.username && this.project_id;
+        },
         seenMessage() {
             const project = this.getProjectName();
            if ( this.count === 1 ) {
@@ -72,6 +108,32 @@ export default {
         Species
     },
     methods: {
+        clearToggle() {
+            this.selected = ''
+        },
+        markSeen( ev ) {
+            const isSeen = ev.target.checked;
+            const key = 'seen-' + this.project_id;
+            let seen = JSON.parse(
+                localStorage.getItem( key ) || '[]'
+            );
+            if ( isSeen && !seen.includes( this.selected ) ) {
+                seen.push( this.selected )
+            } else if ( !isSeen && seen.includes( this.selected ) ) {
+                seen = seen.filter((a) => a !== this.selected);
+            }
+            this.seen = seen;
+            localStorage.setItem(key, JSON.stringify(seen));
+        },
+        setUsername() {
+            this.usernameSet = true;
+        },
+        selectProject(ev) {
+            const project = ev.target.dataset.id;
+            if ( project ) {
+                this.project_id = project;
+            }
+        },
         getProjectName() {
             switch ( this.project_id ) {
                 case '4181':
@@ -91,11 +153,20 @@ export default {
         },
         loadiNatDex(ev) {
             ev.preventDefault();
-            this.loadSeenByUser();
+            this.loadSpecies().then(() => this.loadSeenByUser() );
         },
         loadSeenByUser() {
             const project_id = this.project_id;
             const username = this.username;
+            if ( username === '~' ) {
+                this.seen = JSON.parse(
+                    localStorage.getItem( 'seen-' + project_id ) || '[]'
+                );
+                return;
+            }
+            if ( !project_id || !username ) {
+                return;
+            }
             this.seen = [];
             fetch(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
                 .then((r) => r.json())
@@ -116,7 +187,7 @@ export default {
         },
         loadSpecies() {
             const project_id = this.project_id;
-            fetch(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
+            return fetch(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
                 .then((r) => r.json())
                 .then((d) => {
                     return d.results.sort((r1, r2) => r1.count > r2.count ? -1 : 1 ).map((r) => {
@@ -131,40 +202,73 @@ export default {
                 }).then((items) => {
                     this.items = items;
                 })
+        },
+        route() {
+            const m = location.search.match(/project_id=([^&]*)/);
+            if ( m && m[1] && m[1] !== 'null' ) {
+                this.project_id = m[1];
+            } else {
+                this.project_id = null;
+            }
+            const u = location.search.match(/username=([^&]*)/);
+            if ( u && u[1] !== 'null' ) {
+                this.username = u[1];
+            } else {
+                this.username = null;
+            }
+
+            if ( this.project_id && !this.username ) {
+                this.username = '~';
+            }
         }
     },
     mounted() {
         if ( location.search ) {
-            const m = location.search.match(/project_id=([^&]*)/);
-            if ( m && m[1] && m[1] !== this.project_id ) {
-                this.project_id = m[1];
-            }
-            const u = location.search.match(/username=([^&]*)/);
-            if ( u && u[1] !== this.username ) {
-                this.username = u[1];
-                if ( this.project_id ) {
-                    this.loadSeenByUser();
-                }
-            }
+            this.route();
         }
     },
     updated() {
-        if ( this.items === null && this.project_id ) {
-            this.loadSpecies();
-            const uquery = this.username ? `&username=${this.username}` : '';
-            history.replaceState( null, null, `?project_id=${this.project_id}${uquery}` )
-            if ( uquery && this.seen === null ) {
-                this.loadSeenByUser();
+        const project_fragment = this.project_id ? `project_id=${this.project_id}` : '';
+        const username_fragment = this.username ? `username=${this.username}` : '';
+        const url = project_fragment && username_fragment ?
+            `?${project_fragment}&${username_fragment}` : `?${project_fragment}${username_fragment}`;
+        if (
+            (
+                project_fragment && window.location.search.indexOf( 'project_id' ) === -1
+            ) ||
+            (
+                username_fragment && window.location.search.indexOf( 'username' ) === -1
+            )
+        ) {
+            // Mark change in steps by new url.
+            history.pushState( null, null, url )
+        } else {
+            history.replaceState( null, null, url )
+        }
+        if ( this.project_id &&  !this.items && this.username && !this.seen ) {
+            this.loadSpecies().then(
+                () => this.loadSeenByUser()
+            );
+        }
+        window.onpopstate = () => {
+            this.seen = null;
+            this.items = null;
+            this.route();
+            if ( location.search.indexOf('username=') > -1 ) {
+                this.usernameSet = true;
+            } else {
+                this.usernameSet = false;
             }
-        }
-        if ( this.username ) {
-            history.replaceState( null, null, `?project_id=${this.project_id}&username=${this.username}` )
-        }
+        };
     }
 }
 </script>
 
 <style scoped>
+.app {
+    text-align: center;
+}
+
 header {
     position: sticky;
     width: 100%;
@@ -180,6 +284,25 @@ form {
     padding: 10px;
     margin: auto;
     text-align: center;
+    max-width: 400px;
+}
+
+input[type="text"],
+.label-input {
+    display: block;
+    font-weight: bold;
+    margin: auto;
+    height: 40px;
+    min-width: 300px;
+}
+
+input[type="text"] {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
 }
 
 header > * {
@@ -216,9 +339,50 @@ em {
     background: linear-gradient(180deg, #f6f2fe 0%, #caddff 100%); 
 }
 
+input[type="submit"],
 button {
+    cursor: pointer;
     margin: 10px auto auto;
     display: block;
+    background-color: #74ac00;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 20px 10px;
+    line-height: 15px;
+    margin: 3px 0;
+    border-radius: 100px;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    outline: 0;
+    display: inline-block;
+}
+
+button:hover {
+    opacity: .8;
+}
+
+button:focus {
+    outline: auto;
+    border-color: #74ac00;
+}
+
+.btn-reset {
+    background-color: white;
+    color: #333;
+    border-color: #ccc;
+}
+
+.btn-reset:hover {
+    background-color: #e6e6e6;
+    border-color: #adadad;
+}
+
+button:disabled {
+    opacity: 0.2;
 }
 
 footer {
@@ -226,5 +390,23 @@ footer {
     bottom: 0;
     padding: 10px 40px;
     background: #faf9ff;
+}
+
+footer > a {
+    display: block;
+}
+
+.footer-seen {
+    margin-top: 40px;
+}
+.footer-text {
+    font-size: 0.75em;
+}
+
+.footer-close {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    font-weight: bold;
 }
 </style>

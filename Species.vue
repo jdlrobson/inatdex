@@ -11,7 +11,8 @@
 export default {
     name: 'Species',
     methods: {
-        clicked() {
+        clicked( ev ) {
+            ev.stopPropagation();
             this.$emit( 'click', this.name, this.count, this.url );
         }
     },
