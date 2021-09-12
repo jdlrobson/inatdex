@@ -153,7 +153,9 @@ export default {
         },
         loadiNatDex(ev) {
             ev.preventDefault();
-            this.loadSpecies().then(() => this.loadSeenByUser() );
+            if ( this.project_id ) {
+                this.loadSpecies( this.project_id ).then(() => this.loadSeenByUser() );
+            }
         },
         loadSeenByUser() {
             const project_id = this.project_id;
@@ -185,8 +187,7 @@ export default {
             this.username = '';
             history.replaceState( null, null, '?' )
         },
-        loadSpecies() {
-            const project_id = this.project_id;
+        loadSpecies( project_id ) {
             return fetch(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
                 .then((r) => r.json())
                 .then((d) => {
@@ -246,7 +247,7 @@ export default {
             history.replaceState( null, null, url )
         }
         if ( this.project_id &&  !this.items && this.username && !this.seen ) {
-            this.loadSpecies().then(
+            this.loadSpecies( this.project_id ).then(
                 () => this.loadSeenByUser()
             );
         }
