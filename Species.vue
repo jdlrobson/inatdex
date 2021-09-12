@@ -13,7 +13,12 @@ export default {
     methods: {
         clicked( ev ) {
             ev.stopPropagation();
-            this.$emit( 'click', this.name, this.count, this.url );
+            this.$emit( 'click', this.name, {
+                count: this.count,
+                url: this.url,
+                wikipedia: this.wikipedia,
+                totalCount: this.totalCount
+            } );
         }
     },
     computed: {
@@ -26,6 +31,8 @@ export default {
     },
     props: {
         count: Number,
+        totalCount: Number,
+        wikipedia: String,
         seen: Boolean,
         url: String,
         name: String,

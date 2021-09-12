@@ -40,14 +40,17 @@
                 :name="item.name"
                 :url="item.url"
                 :count="item.count"
+                :total-count="item.totalCount"
+                :wikipedia="item.wikipedia"
                 :seen="seen && seen.includes(item.name)"
                 :photo="item.photo"
             ></species>
         </div>
-        <footer v-if="selected">
+        <footer v-if="selected && seen">
             <h2>{{ selected }}</h2>
-            <p>{{ seenMessage }}</p>
+            <p>{{ seenMessage }}, {{ rarity }}</p>
             <a :href="url">View observations</a>
+            <a :href="wikipedia">View on Wikipedia.org</a>
             <div class="footer-seen" v-if="username === '~'">
                 <input
                     type="checkbox"
@@ -71,14 +74,40 @@ import Loader from './Loader.vue';
 
 const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
 
+const getRarity = ( min, max, count ) => {
+    const pc = Math.ceil( ( count / max ) * 100 );
+    switch ( true ) {
+        case pc > 80:
+            return 'regulars at this location';
+        case pc > 25:
+            return `common for this location`;
+        case pc > 5:
+            return `sometimes at this location`;
+        case pc > 1:
+            return `unusual for this location ${pc}`;
+        default:
+            return 'rare for this location';
+    }
+};
+
+const getHeader = ( countTotal, count, min, max ) => {
+    const pc = Math.ceil(count / countTotal * 100);
+    return `${pc}% of observations here (${getRarity(min, max, count)})`;
+};
+
 export default {
     name: 'App',
     data() {
         return {
             usernameSet: false,
             selected: '',
+            totalCount: '',
+            wikipedia: '',
             url: '',
+            totalLocalCount: 0,
             count: 0,
+            max: 0,
+            min: 0,
             username: null,
             items: null,
             project_id: null,
@@ -86,6 +115,9 @@ export default {
         };
     },
     computed: {
+        rarity() {
+            return `${getHeader(this.totalLocalCount, this.count, this.min, this.max)}. Observed globally ${this.totalCount} times.`;
+        },
         displayUsername() {
             return this.username === '~' ? 'your personal use' : this.username;
         },
@@ -149,9 +181,11 @@ export default {
                     return this.project_id.replace(/-/g, ' ');
             }
         },
-        toggleSelected( selection, count, url ) {
-            this.count = count;
-            this.url = url;
+        toggleSelected( selection, data ) {
+            this.count = data.count;
+            this.url = data.url;
+            this.wikipedia = data.wikipedia;
+            this.totalCount = data.totalCount;
             if ( selection !== this.selected ) {
                 this.selected = selection;
             } else {
@@ -202,12 +236,20 @@ export default {
                         return {
                             url: `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&subview=map&taxon_id=${taxon.id}&verifiable=any`,
                             count: r.count,
+                            totalCount: taxon.observations_count,
+                            wikipedia: taxon.wikipedia_url,
                             name: taxon.preferred_common_name,
                             photo: taxon.default_photo.medium_url
                         }
                     })
                 }).then((items) => {
                     this.items = items;
+                    const counts = this.items.map((c) => c.count);
+                    this.max = Math.max.apply(null, counts);
+                    this.min = Math.min.apply(null, counts);
+                    this.totalLocalCount = counts.reduce((previousValue, currentValue) => {
+                        return previousValue + currentValue
+                    }, 0);
                 })
         },
         route() {
@@ -404,8 +446,17 @@ button:disabled {
 footer {
     position: sticky;
     bottom: 0;
-    padding: 10px 40px;
+    padding: 10px 40px 60px;
     background: #faf9ff;
+}
+
+footer h2,
+footer p {
+    margin: 8px 0;
+}
+
+footer p {
+    margin-bottom: 20px;
 }
 
 footer > a {
