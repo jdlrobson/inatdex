@@ -3,6 +3,7 @@
         <form v-if="!enabled" @submit="loadiNatDex">
             <p>The iNatdex is an <a href="https://inaturalist.org">iNaturalist</a> companion app that tells you what species you have seen and haven't seen
             in your favorite iNaturalist projects.</p>
+            <p>It is not associated or endorsed by the iNaturalist project.</p>
             <div v-if="!usernameSet">
                 <label class="label-input">Please enter your iNaturalist username:</label>
                 <input type="text" v-model="username"

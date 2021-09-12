@@ -1,0 +1,13 @@
+{
+    "name": "iNatDex",
+    "short_name": "iNatDex",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#fff",
+    "description": "A companion app for iNaturalist.",
+    "icons": [{
+      "src": "index.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    }]
+}
