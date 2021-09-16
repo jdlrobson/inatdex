@@ -229,9 +229,12 @@ export default {
             return fetch(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
                 .then((r) => r.json())
                 .then((d) => {
-                    return d.results.sort((r1, r2) => r1.count > r2.count ? -1 : 1 ).map((r) => {
+                    return d.results.sort(
+                        (r1, r2) => r1.count > r2.count ? -1 : 1
+                    ).map((r) => {
                         const taxon = r.taxon;
                         return {
+                            rank: r.taxon.rank,
                             url: `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&subview=map&taxon_id=${taxon.id}&verifiable=any`,
                             count: r.count,
                             totalCount: taxon.observations_count,
