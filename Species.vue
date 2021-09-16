@@ -25,11 +25,12 @@ export default {
         photoClasses() {
             return {
                 'species__photo': true,
-                'species__photo--seen': this.seen
+                'species__photo--seen': this.invertHighlight ? !this.seen : this.seen
             }
         }
     },
     props: {
+        invertHighlight: false,
         count: Number,
         totalCount: Number,
         wikipedia: String,

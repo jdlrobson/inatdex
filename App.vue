@@ -32,20 +32,38 @@
             <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <a :href="leaderboard">📈</a></em>
         </header>
         <loader v-if="!items && enabled"></loader>
-        <div class="species-grid" v-if="items" @click="clearToggle">
-            <loader v-if="!seen">s</loader>
-            <species v-for="(item, i) in items"
-                @click="toggleSelected"
-                :key="i"
-                :name="item.name"
-                :url="item.url"
-                :count="item.count"
-                :total-count="item.totalCount"
-                :wikipedia="item.wikipedia"
-                :seen="seen && seen.includes(item.name)"
-                :photo="item.photo"
-            ></species>
-        </div>
+        <main v-if="items">
+            <nav>
+                <label>sort by:</label>
+                <a href="#count"
+                    :class="filterClass('sort', 'count')"
+                    @click="setSort('count', -1)">count</a>
+                <a href="#name" :class="filterClass('sort', 'name')"
+                    @click="setSort('name', 1)">name</a>
+                <label>highlight:</label>
+                <a href="#seen"
+                    :class="filterClass('invertHighlight', false)"
+                    @click="setHighlightMode(false)">seen</a>
+                <a href="#notseen"
+                    :class="filterClass('invertHighlight', true)"
+                    @click="setHighlightMode(true)">not seen</a>
+            </nav>
+            <div class="species-grid" @click="clearToggle">
+                <loader v-if="!seen">s</loader>
+                <species v-for="(item, i) in items"
+                    :invert-highlight="invertHighlight"
+                    @click="toggleSelected"
+                    :key="i"
+                    :name="item.name"
+                    :url="item.url"
+                    :count="item.count"
+                    :total-count="item.totalCount"
+                    :wikipedia="item.wikipedia"
+                    :seen="seen && seen.includes(item.name)"
+                    :photo="item.photo"
+                ></species>
+            </div>
+        </main>
         <footer v-if="selected && seen">
             <h2>{{ selected }}</h2>
             <p>{{ seenMessage }}, {{ rarity }}</p>
@@ -64,7 +82,7 @@
             </div>
             <a class="footer-close" @click="clearToggle">Close</a>
         </footer>
-        <nav>
+        <nav class="nav-end">
             <button v-if="isResetEnabled" class="btn-reset" @click="reset"
                 >Try a different location or username</button>
         </nav>
@@ -101,6 +119,10 @@ export default {
     name: 'App',
     data() {
         return {
+            invertHighlight: false,
+            cache: {},
+            sort: 'count',
+            sortDir: -1,
             usernameSet: false,
             selected: '',
             totalCount: '',
@@ -152,6 +174,19 @@ export default {
         Loader
     },
     methods: {
+        filterClass( key, value ) {
+            return {
+                'filter--selected': this[key] === value,
+                'filter': true
+            };
+        },
+        setHighlightMode( mode ) {
+            this.invertHighlight = mode;
+        },
+        setSort( sort, dir ) {
+            this.sort = sort;
+            this.sortDir = dir;
+        },
         clearToggle() {
             this.selected = ''
         },
@@ -227,13 +262,18 @@ export default {
             this.username = '';
             history.replaceState( null, null, '?' )
         },
+        fetchCache(url) {
+            if ( !this.cache[url] ) {
+                this.cache[url] = fetch(url).then((r) => {
+                    return r.json();
+                });
+            }
+            return this.cache[url];
+        },
         loadSpecies( project_id ) {
-            return fetch(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
-                .then((r) => r.json())
+            return this.fetchCache(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
                 .then((d) => {
-                    return d.results.sort(
-                        (r1, r2) => r1.count > r2.count ? -1 : 1
-                    ).map((r) => {
+                    return d.results.map((r) => {
                         const taxon = r.taxon;
                         return {
                             rank: r.taxon.rank,
@@ -244,7 +284,9 @@ export default {
                             name: taxon.preferred_common_name,
                             photo: taxon.default_photo.medium_url
                         }
-                    })
+                    }).sort(
+                        (r1, r2) => r1[this.sort] > r2[this.sort] ? this.sortDir : -this.sortDir
+                    );
                 }).then((items) => {
                     this.items = items;
                     const counts = this.items.map((c) => c.count);
@@ -386,8 +428,14 @@ em {
     row-gap: 10px;
     column-gap: 10px;
     justify-content: center;
+}
+main {
     background: #caddff;
     background: linear-gradient(180deg, #f6f2fe 0%, #caddff 100%); 
+}
+
+main > nav {
+    padding: 10px 0;
 }
 
 .species-grid .loader {
@@ -425,7 +473,7 @@ button:focus {
     border-color: #74ac00;
 }
 
-nav {
+> nav {
     position: fixed;
     bottom: 2px;
     left: 0;
@@ -482,6 +530,20 @@ footer > a {
     position: absolute;
     right: 8px;
     top: 8px;
+    font-weight: bold;
+}
+
+label {
+    font-style: italic;
+}
+
+.filter {
+    color: #666;
+    text-decoration: none;
+}
+
+.filter--selected {
+    color: #333;
     font-weight: bold;
 }
 </style>
