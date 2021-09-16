@@ -64,8 +64,10 @@
             </div>
             <a class="footer-close" @click="clearToggle">Close</a>
         </footer>
-        <button v-if="isResetEnabled" class="btn-reset" @click="reset"
-            >Try a different location or username</button>
+        <nav>
+            <button v-if="isResetEnabled" class="btn-reset" @click="reset"
+                >Try a different location or username</button>
+        </nav>
     </div>
 </template>
 <script>
@@ -423,15 +425,21 @@ button:focus {
     border-color: #74ac00;
 }
 
-.btn-reset {
-    background-color: white;
-    color: #333;
-    border-color: #ccc;
+nav {
     position: fixed;
     bottom: 2px;
     left: 0;
     right: 0;
-    margin: auto;;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-reset {
+    background-color: white;
+    color: #333;
+    border-color: #ccc;
+    margin: auto;
+    text-align: center;
 }
 
 .btn-reset:hover {
