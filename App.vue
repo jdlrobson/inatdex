@@ -10,7 +10,7 @@
                     placeholder="Please enter your iNaturalist username"
                     name="username" @blur="setUsername">
                 <p>Type "~" if you do not have an iNaturalist account.</p>
-                <button @click="setUsername">Next</button>
+                <button @click="setUsername" :disabled="!username">Next</button>
             </div>
             <div v-if="usernameSet && !project_id">
                 <p>Let's create an iNatDex (checklist) for {{username}}.</p>
