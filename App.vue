@@ -473,7 +473,7 @@ button:focus {
     border-color: #74ac00;
 }
 
-> nav {
+.app > nav {
     position: fixed;
     bottom: 2px;
     left: 0;
