@@ -15,6 +15,8 @@
             <div v-if="usernameSet && !project_id">
                 <p>Let's create an iNatDex (checklist) for {{username}}.</p>
                 <label class="label-input">Which San Francisco project shall we use?</label>
+                <button data-id="birds-of-san-francisco-excluding-farallon-islands" @click="selectProject">All San Francisco</button>
+                <button data-id="birds-of-san-francisco-botanical-garden" @click="selectProject">Botanical Gardens</button>
                 <button data-id="birds-of-ocean-beach" @click="selectProject">Ocean Beach</button>
                 <button data-id="animals-of-lands-end-san-francisco" @click="selectProject">Lands End</button>
                 <button data-id="birds-of-presidio" @click="selectProject">Birds of the Presidio</button>
