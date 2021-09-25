@@ -148,8 +148,9 @@ export default {
     },
     computed: {
         filteredItems() {
+            const searchTerm = this.filterName && this.filterName.toLowerCase();
             return this.items.filter((item) =>
-                item.name && item.name.indexOf( this.filterName ) > -1
+                item.name && item.name.toLowerCase().indexOf( searchTerm ) > -1
             );
         },
         leaderboard() {
