@@ -49,10 +49,11 @@
                 <a href="#notseen"
                     :class="filterClass('invertHighlight', true)"
                     @click="setHighlightMode(true)">not seen</a>
+                <input placeholder="Filter by species name" v-model="filterName">
             </nav>
             <div class="species-grid" @click="clearToggle">
                 <loader v-if="!seen">s</loader>
-                <species v-for="(item, i) in items"
+                <species v-for="(item, i) in filteredItems"
                     :invert-highlight="invertHighlight"
                     @click="toggleSelected"
                     :key="i"
@@ -121,6 +122,7 @@ export default {
     name: 'App',
     data() {
         return {
+            filterName: '',
             invertHighlight: false,
             cache: {},
             sort: 'count',
@@ -141,6 +143,11 @@ export default {
         };
     },
     computed: {
+        filteredItems() {
+            return this.items.filter((item) =>
+                item.name.indexOf( this.filterName ) > -1
+            );
+        },
         leaderboard() {
             return `https://www.inaturalist.org/projects/${this.project_id}?tab=observers`;
         },
@@ -408,6 +415,11 @@ header > * {
     color: #847792;
     font-size: 1em;
     font-weight: 700;
+}
+
+nav input {
+    margin: 8px auto 0;
+    display: block;
 }
 
 h3 {
