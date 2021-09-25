@@ -149,7 +149,7 @@ export default {
     computed: {
         filteredItems() {
             return this.items.filter((item) =>
-                item.name.indexOf( this.filterName ) > -1
+                item.name && item.name.indexOf( this.filterName ) > -1
             );
         },
         leaderboard() {
