@@ -30,6 +30,9 @@
         </form>
         <header v-if="enabled">
             <h2>iNatdex for {{displayUsername}}</h2>
+            <img
+                width=50 height=50
+                :src="avatar" :alt="displayUsername">
             <h3>{{ projectName }}</h3>
             <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <a :href="leaderboard">📈</a></em>
         </header>
@@ -94,6 +97,7 @@
 <script>
 import Species from './Species.vue';
 import Loader from './Loader.vue';
+import { fetchCache, getAvatar } from './api.js';
 
 const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
 
@@ -122,9 +126,9 @@ export default {
     name: 'App',
     data() {
         return {
+            avatar: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
             filterName: '',
             invertHighlight: false,
-            cache: {},
             sort: 'count',
             sortDir: -1,
             usernameSet: false,
@@ -245,6 +249,9 @@ export default {
         loadSeenByUser() {
             const project_id = this.project_id;
             const username = this.username;
+            getAvatar( username ).then((avatar) => {
+                this.avatar = avatar;
+            });
             if ( username === '~' ) {
                 this.seen = JSON.parse(
                     localStorage.getItem( 'seen-' + project_id ) || '[]'
@@ -271,16 +278,8 @@ export default {
             this.username = '';
             history.replaceState( null, null, '?' )
         },
-        fetchCache(url) {
-            if ( !this.cache[url] ) {
-                this.cache[url] = fetch(url).then((r) => {
-                    return r.json();
-                });
-            }
-            return this.cache[url];
-        },
         loadSpecies( project_id ) {
-            return this.fetchCache(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
+            return fetchCache(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
                 .then((d) => {
                     return d.results.map((r) => {
                         const taxon = r.taxon;
@@ -374,12 +373,18 @@ export default {
 header {
     position: sticky;
     width: 100%;
-    height: 80px;
+    height: 130px;
     top: 0;
     background: #faf9ff;
     padding: 5px;
     border-bottom: solid 1px #847792;
     z-index: 2;
+}
+
+header img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50px;
 }
 
 form {
