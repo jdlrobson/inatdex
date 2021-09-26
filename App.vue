@@ -53,7 +53,7 @@
                     @click="setSort('count', -1)">count</a>
                 <a href="#name" :class="filterClass('sort', 'name')"
                     @click="setSort('name', 1)">name</a>
-                <a v-if="recent" href="#nearby"
+                <a v-if="recent !== null" href="#nearby"
                     :class="filterClass('sort', 'nearby')"
                     @click="setSort('nearby', 1)">nearby</a>
                 <label>highlight:</label>
