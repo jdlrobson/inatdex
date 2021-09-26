@@ -2,7 +2,7 @@
     <div class="species" @click="clicked">
         <div
             v-if="recent && !seen"
-            :class="recentClasses" title="Seen recently">❗</div>
+            :class="recentClasses" title="Seen recently">!</div>
         <img :src="photo" :alt="name"
             :class="photoClasses"
             :title="name">
@@ -56,7 +56,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .species {
     position: relative;
 }
@@ -76,8 +76,17 @@ export default {
 }
 
 .species__recent {
+    @width-alert: 25;
+    background: rgb(220, 81, 81);
+    color: white;
+    font-weight: bold;
+    padding-top: 2px;
+    border: solid 1px white;
     position: absolute;
-    right: 0;
+    right: unit( ( @width-alert + ( @width-alert / 2 ) ), px );
+    width: unit( @width-alert, px );
+    height: unit( @width-alert, px );
+    border-radius: unit( @width-alert, px );
 }
 
 </style>
