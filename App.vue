@@ -122,7 +122,7 @@ import { getAvatar, getEbirdObservations,
     SF_PROJECT,
     getINatSpecies, getSpeciesInProject
 } from './api.js';
-const LS_USERNAMES = 'my-users';
+const LS_USERNAMES = 'my-users-local';
 
 function getArrayFromLocalStorage( key ) {
     const value = localStorage.getItem( key );
@@ -265,7 +265,7 @@ export default {
         },
         setUsername() {
             this.usernameSet = true;
-            const username = this.username;
+            const username = this.username.toLowerCase().trim();
             if ( username !== '~' && previouslyUsedUsernames.filter( user => user.name === username ).length === 0 ) {
                 getAvatar( username ).then((avatar) => {
                     previouslyUsedUsernames.push( {
