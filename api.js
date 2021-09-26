@@ -43,7 +43,7 @@ const getINatSpecies = ( project_id, username ) => {
 
 const getSpeciesInProject = ( project_id ) => {
     const foundSpecies = [];
-    return fetchCache(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
+    return fetchCache(`${SPECIES_API}?project_id=${project_id}&back=10&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
         .then((data) => {
             if ( project_id === SF_PROJECT ) {
                 data.results.forEach((d) => {
