@@ -424,7 +424,7 @@ export default {
                                 lat: match.lat,
                                 lng: match.lng,
                                 date: match.obsDt,
-                                location: match.locName
+                                location: `${match.locName} (${match.locId})`
                             }
                         );
                     })
