@@ -68,7 +68,7 @@
                     :invert-highlight="invertHighlight"
                     @click="toggleSelected"
                     :key="i"
-                    :recent="seen && recent && recent[item.id] !== undefined"
+                    :recent="seen !== null && recent && recent[item.id] !== undefined"
                     :name="item.name"
                     :url="item.url"
                     :id="item.id"
