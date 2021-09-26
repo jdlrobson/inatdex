@@ -84,7 +84,7 @@
                     target="_blank"
                     :href="`https://www.google.com/maps/@${recent.lat},${recent.lng},17z`"
                 >
-                {{recent.location}}
+                {{recent.location}} {{recent.date}}
                 </a>
             </div>
             <div class="footer-seen" v-if="username === '~'">
@@ -373,16 +373,24 @@ export default {
             getEbirdObservations().then((ebird) => {
                 ebird.filter((ebird) => ebird.inat)
                     .forEach(( match ) => {
-                        if (!this.recent[match.inat]) {
-                            this.recent[match.inat] = [];
-                        }
-                        this.recent[match.inat].push(
-                            {
-                                lat: match.lat,
-                                lng: match.lng,
-                                location: match.locName
+                        const location = match.locName;
+                        if (
+                            !location.toLowerCase().match(
+                                /(auto selected|farallon islands)/
+                            )
+                        ) {
+                            if (!this.recent[match.inat]) {
+                                this.recent[match.inat] = [];
                             }
-                        );
+                            this.recent[match.inat].push(
+                                {
+                                    lat: match.lat,
+                                    lng: match.lng,
+                                    date: match.obsDt,
+                                    location: match.locName
+                                }
+                            );
+                        }
                     })
             })
         }
