@@ -468,7 +468,7 @@ export default {
                         );
                     })
             })
-        } else {
+        } else if ( this.project_id !== SF_PROJECT ) {
             this.recent = null;
         }
         window.onpopstate = () => {
