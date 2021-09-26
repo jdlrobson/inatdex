@@ -53,6 +53,9 @@
                     @click="setSort('count', -1)">count</a>
                 <a href="#name" :class="filterClass('sort', 'name')"
                     @click="setSort('name', 1)">name</a>
+                <a v-if="recent" href="#nearby"
+                    :class="filterClass('sort', 'nearby')"
+                    @click="setSort('nearby', 1)">nearby</a>
                 <label>highlight:</label>
                 <a href="#seen"
                     :class="filterClass('invertHighlight', false)"
@@ -118,6 +121,7 @@
 import Species from './Species.vue';
 import Loader from './Loader.vue';
 import Avatar from './Avatar.vue';
+import { getDistanceFromLatLonInKm } from './geo.js';
 import { getAvatar, getEbirdObservations,
     SF_PROJECT,
     getINatSpecies, getSpeciesInProject
@@ -193,6 +197,8 @@ export default {
             const searchTerm = this.filterName && this.filterName.toLowerCase();
             return this.items.filter((item) =>
                 item.name && item.name.toLowerCase().indexOf( searchTerm ) > -1
+            ).sort(
+                (r1, r2) => r1[this.sort] > r2[this.sort] ? this.sortDir : -this.sortDir
             );
         },
         leaderboard() {
@@ -244,6 +250,28 @@ export default {
         setSort( sort, dir ) {
             this.sort = sort;
             this.sortDir = dir;
+            if ( sort === 'nearby' ) {
+                navigator.geolocation.getCurrentPosition( ( location ) => {
+                    const { latitude, longitude } = location.coords;
+                    this.items = this.items.map((item) => {
+                        const recentObservations = this.recent[item.id];
+                        const recentObs = recentObservations &&
+                            recentObservations[0];
+                        if (!recentObs) {
+                            item.nearby = 100000;
+                        } else {
+                            const { lat, lng } = recentObs;
+
+                            item.nearby = lat && lng ? getDistanceFromLatLonInKm(
+                                latitude, longitude, lat, lng
+                            ) : 100000;
+                        }
+                        return item;
+                    });
+                }, () => {
+                    this.sort = 'count';
+                } );
+            }
         },
         clearToggle() {
             this.selected = ''
@@ -356,6 +384,7 @@ export default {
                         const taxon = r.taxon;
                         return {
                             id: '' + r.taxon.id,
+                            nearby: 0,
                             rank: r.taxon.rank,
                             url: `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&subview=map&taxon_id=${taxon.id}&verifiable=any`,
                             count: r.count,
@@ -364,9 +393,7 @@ export default {
                             name: taxon.preferred_common_name,
                             photo: taxon.default_photo.medium_url
                         }
-                    }).sort(
-                        (r1, r2) => r1[this.sort] > r2[this.sort] ? this.sortDir : -this.sortDir
-                    );
+                    });
                 }).then((items) => {
                     this.items = items;
                     const counts = this.items.map((c) => c.count);
@@ -441,6 +468,8 @@ export default {
                         );
                     })
             })
+        } else {
+            this.recent = null;
         }
         window.onpopstate = () => {
             this.seen = null;
