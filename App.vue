@@ -82,7 +82,7 @@
                 <a v-for="(recent, i) in recent[selectedId]"
                     :key="i"
                     target="_blank"
-                    :href="`https://www.google.com/maps/@${recent.lat},${recent.lng},17z`"
+                    :href="`https://www.google.com/maps/place/${recent.location}/@${recent.lat},${recent.lng},17z`"
                 >
                 {{recent.location}} {{recent.date}}
                 </a>
