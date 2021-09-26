@@ -373,24 +373,17 @@ export default {
             getEbirdObservations().then((ebird) => {
                 ebird.filter((ebird) => ebird.inat)
                     .forEach(( match ) => {
-                        const location = match.locName;
-                        if (
-                            !location.toLowerCase().match(
-                                /(auto selected|farallon islands)/
-                            )
-                        ) {
-                            if (!this.recent[match.inat]) {
-                                this.recent[match.inat] = [];
-                            }
-                            this.recent[match.inat].push(
-                                {
-                                    lat: match.lat,
-                                    lng: match.lng,
-                                    date: match.obsDt,
-                                    location: match.locName
-                                }
-                            );
+                        if (!this.recent[match.inat]) {
+                            this.recent[match.inat] = [];
                         }
+                        this.recent[match.inat].push(
+                            {
+                                lat: match.lat,
+                                lng: match.lng,
+                                date: match.obsDt,
+                                location: match.locName
+                            }
+                        );
                     })
             })
         }

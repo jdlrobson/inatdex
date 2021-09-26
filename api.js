@@ -10,8 +10,6 @@ const fetchCache = (url, options) => {
         cache[url] = fetch(url, options).then((r) => {
             return r.json();
         });
-    } else {
-        console.log('use cache', url );
     }
     return cache[url];
 };
@@ -62,9 +60,21 @@ const getEbirdObservations = () => {
             'X-eBirdApiToken': ebirdToken
         }
     }).then((data) => {
-        return data.map((ebird) => Object.assign(ebird, {
-            inat: ebirdToINat[ebird.speciesCode]
-        }));
+        return data.filter((ebird) => {
+            // Filter out hard to find things (need a boat)
+            return ebird.locName && !ebird.locName.toLowerCase().match(
+                    /(auto selected|farallon islands)/
+                // cross species are too complicated for now.
+                ) && ebird.speciesCode.charAt(0) !== 'x';
+        } ).map((ebird) => {
+            if(!ebirdToINat[ebird.speciesCode]) {
+                console.log(ebird);
+                console.warn( `Missing ebird to iNat ${ebird.speciesCode}`)
+            }
+            return Object.assign(ebird, {
+                inat: ebirdToINat[ebird.speciesCode]
+            });
+        });
     })
 }
 
