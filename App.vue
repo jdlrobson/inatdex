@@ -68,7 +68,7 @@
                     :invert-highlight="invertHighlight"
                     @click="toggleSelected"
                     :key="i"
-                    :recent="recent && recent[item.id] !== undefined"
+                    :recent="seen && recent && recent[item.id] !== undefined"
                     :name="item.name"
                     :url="item.url"
                     :id="item.id"
@@ -133,7 +133,10 @@ function getArrayFromLocalStorage( key ) {
     }
 }
 
-const previouslyUsedUsernames = getArrayFromLocalStorage( LS_USERNAMES );
+// clean up duplicates from previously stored sessions.
+const previouslyUsedUsernames = Array.from(
+    new Set( getArrayFromLocalStorage( LS_USERNAMES ) )
+);
 
 const getRarity = ( max, count ) => {
     const pc = Math.ceil( ( count / max ) * 100 );
@@ -264,17 +267,26 @@ export default {
             this.setUsername();
         },
         setUsername() {
-            this.usernameSet = true;
             const username = this.username.toLowerCase().trim();
-            if ( username !== '~' && previouslyUsedUsernames.filter( user => user.name === username ).length === 0 ) {
+            const isDuplicate = ( username ) => {
+                return previouslyUsedUsernames.filter( user => user.name === username ).length > 0;
+            }
+            if ( username !== '~' && !this.usernameSet && !isDuplicate( username ) ) {
                 getAvatar( username ).then((avatar) => {
+                    if ( !avatar ) {
+                        return;
+                    }
                     previouslyUsedUsernames.push( {
                         name: username,
                         avatar
                     } );
-                    localStorage.setItem(LS_USERNAMES, JSON.stringify(previouslyUsedUsernames));
+                    // check again in case this method was called twice.
+                    if ( !isDuplicate( username ) ) {
+                        localStorage.setItem(LS_USERNAMES, JSON.stringify(previouslyUsedUsernames));
+                    }
                 } );
             }
+            this.usernameSet = true;
         },
         selectProject(ev) {
             const project = ev.target.dataset.id;

@@ -43,7 +43,10 @@ export default {
     },
     props: {
         id: String,
-        recent: Boolean,
+        recent: {
+            type: Boolean,
+            required: true
+        },
         invertHighlight: Boolean,
         count: Number,
         totalCount: Number,
