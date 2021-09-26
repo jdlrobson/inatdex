@@ -11,6 +11,14 @@
                     name="username" @blur="setUsername">
                 <p>Type "~" if you do not have an iNaturalist account.</p>
                 <button @click="setUsername" :disabled="!username">Next</button>
+                <div v-if="previousUsernames.length">
+                    You can also use a previously used username:
+                </div>
+                <avatar
+                    v-for="user in previousUsernames"
+                    :key="'username-' + user.name"
+                    @click="quickSetUsername(user.name)"
+                    :src="user.avatar" :alt="user.name"></avatar>
             </div>
             <div v-if="usernameSet && !project_id">
                 <p>Let's create an iNatDex (checklist) for {{username}}.</p>
@@ -30,9 +38,9 @@
         </form>
         <header v-if="enabled">
             <h2>iNatdex for {{displayUsername}}</h2>
-            <img
-                width=50 height=50
+            <avatar
                 :src="avatar" :alt="displayUsername">
+            </avatar>
             <h3>{{ projectName }}</h3>
             <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <a :href="leaderboard">📈</a></em>
         </header>
@@ -109,10 +117,23 @@
 <script>
 import Species from './Species.vue';
 import Loader from './Loader.vue';
+import Avatar from './Avatar.vue';
 import { getAvatar, getEbirdObservations,
     SF_PROJECT,
     getINatSpecies, getSpeciesInProject
 } from './api.js';
+const LS_USERNAMES = 'my-users';
+
+function getArrayFromLocalStorage( key ) {
+    const value = localStorage.getItem( key );
+    if ( !value ) {
+        return [];
+    } else {
+        return JSON.parse( value );
+    }
+}
+
+const previouslyUsedUsernames = getArrayFromLocalStorage( LS_USERNAMES );
 
 const getRarity = ( max, count ) => {
     const pc = Math.ceil( ( count / max ) * 100 );
@@ -162,6 +183,9 @@ export default {
         };
     },
     computed: {
+        previousUsernames() {
+            return previouslyUsedUsernames;
+        },
         filteredItems() {
             const searchTerm = this.filterName && this.filterName.toLowerCase();
             return this.items.filter((item) =>
@@ -200,6 +224,7 @@ export default {
         }
     },
     components: {
+        Avatar,
         Species,
         Loader
     },
@@ -234,8 +259,22 @@ export default {
             this.seen = seen;
             localStorage.setItem(key, JSON.stringify(seen));
         },
+        quickSetUsername( username ) {
+            this.username = username;
+            this.setUsername();
+        },
         setUsername() {
             this.usernameSet = true;
+            const username = this.username;
+            if ( username !== '~' && previouslyUsedUsernames.filter( user => user.name === username ).length === 0 ) {
+                getAvatar( username ).then((avatar) => {
+                    previouslyUsedUsernames.push( {
+                        name: username,
+                        avatar
+                    } );
+                    localStorage.setItem(LS_USERNAMES, JSON.stringify(previouslyUsedUsernames));
+                } );
+            }
         },
         selectProject(ev) {
             const project = ev.target.dataset.id;
@@ -267,14 +306,15 @@ export default {
         loadSeenByUser() {
             const project_id = this.project_id;
             const username = this.username;
-            getAvatar( username ).then((avatar) => {
-                this.avatar = avatar;
-            });
             if ( username === '~' ) {
                 this.seen = JSON.parse(
                     localStorage.getItem( 'seen-' + project_id ) || '[]'
                 );
                 return;
+            } else {
+                getAvatar( username ).then((avatar) => {
+                    this.avatar = avatar;
+                });
             }
             if ( !project_id || !username ) {
                 return;
@@ -293,6 +333,8 @@ export default {
             this.seen = null;
             this.project_id = '';
             this.username = '';
+            this.usernameSet = false;
+            this.avatar = '';
             history.replaceState( null, null, '?' )
         },
         loadSpecies( project_id ) {
@@ -416,12 +458,6 @@ header {
     padding: 5px;
     border-bottom: solid 1px #847792;
     z-index: 2;
-}
-
-header img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50px;
 }
 
 form {
