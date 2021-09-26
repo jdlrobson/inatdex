@@ -1,8 +1,12 @@
 <template>
     <div class="species" @click="clicked">
+        <div
+            v-if="recent"
+            class="species__recent" title="Seen recently">❗</div>
         <img :src="photo" :alt="name"
             :class="photoClasses"
             :title="name">
+        <slot/>
     </div>
 </template>
 
@@ -14,6 +18,7 @@ export default {
         clicked( ev ) {
             ev.stopPropagation();
             this.$emit( 'click', this.name, {
+                id: this.id,
                 count: this.count,
                 url: this.url,
                 wikipedia: this.wikipedia,
@@ -30,7 +35,9 @@ export default {
         }
     },
     props: {
-        invertHighlight: false,
+        id: String,
+        recent: Boolean,
+        invertHighlight: Boolean,
         count: Number,
         totalCount: Number,
         wikipedia: String,
@@ -43,6 +50,9 @@ export default {
 </script>
 
 <style scoped>
+.species {
+    position: relative;
+}
 
 .species__photo {
     width: 100px;
@@ -56,5 +66,10 @@ export default {
 .species__photo--seen {
     opacity: 1;
     filter: none;
+}
+
+.species__recent {
+    position: absolute;
+    right: 0;
 }
 </style>

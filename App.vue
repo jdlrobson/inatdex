@@ -60,8 +60,10 @@
                     :invert-highlight="invertHighlight"
                     @click="toggleSelected"
                     :key="i"
+                    :recent="recent && recent[item.id] !== undefined"
                     :name="item.name"
                     :url="item.url"
+                    :id="item.id"
                     :count="item.count"
                     :total-count="item.totalCount"
                     :wikipedia="item.wikipedia"
@@ -75,6 +77,16 @@
             <p>{{ seenMessage }}, {{ rarity }}</p>
             <a :href="url">View observations</a>
             <a :href="wikipedia">View on Wikipedia.org</a>
+            <div v-if="recent[selectedId]">
+                Seen recently @
+                <a v-for="(recent, i) in recent[selectedId]"
+                    :key="i"
+                    target="_blank"
+                    :href="`https://www.google.com/maps/@${recent.lat},${recent.lng},17z`"
+                >
+                {{recent.location}}
+                </a>
+            </div>
             <div class="footer-seen" v-if="username === '~'">
                 <input
                     type="checkbox"
@@ -97,9 +109,10 @@
 <script>
 import Species from './Species.vue';
 import Loader from './Loader.vue';
-import { fetchCache, getAvatar } from './api.js';
-
-const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
+import { getAvatar, getEbirdObservations,
+    getINatSpecies, getSpeciesInProject
+} from './api.js';
+const SF_PROJECT = 'birds-of-san-francisco-excluding-farallon-islands';
 
 const getRarity = ( max, count ) => {
     const pc = Math.ceil( ( count / max ) * 100 );
@@ -126,6 +139,7 @@ export default {
     name: 'App',
     data() {
         return {
+            recent: null,
             avatar: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
             filterName: '',
             invertHighlight: false,
@@ -135,6 +149,7 @@ export default {
             selected: '',
             totalCount: '',
             wikipedia: '',
+            selectedId: null,
             url: '',
             totalLocalCount: 0,
             count: 0,
@@ -233,6 +248,7 @@ export default {
         toggleSelected( selection, data ) {
             this.count = data.count;
             this.url = data.url;
+            this.selectedId = data.id;
             this.wikipedia = data.wikipedia;
             this.totalCount = data.totalCount;
             if ( selection !== this.selected ) {
@@ -262,8 +278,7 @@ export default {
             if ( !project_id || !username ) {
                 return;
             }
-            return fetch(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
-                .then((r) => r.json())
+            return getINatSpecies( project_id, username )
                 .then((r) => {
                     return r.results.map((r) => {
                         return r.taxon.preferred_common_name;
@@ -280,11 +295,12 @@ export default {
             history.replaceState( null, null, '?' )
         },
         loadSpecies( project_id ) {
-            return fetchCache(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
+            return getSpeciesInProject( project_id )
                 .then((d) => {
                     return d.results.map((r) => {
                         const taxon = r.taxon;
                         return {
+                            id: '' + r.taxon.id,
                             rank: r.taxon.rank,
                             url: `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&subview=map&taxon_id=${taxon.id}&verifiable=any`,
                             count: r.count,
@@ -351,6 +367,24 @@ export default {
             this.loadSpecies( this.project_id ).then(
                 () => this.loadSeenByUser()
             );
+        }
+        if ( this.project_id === SF_PROJECT && !this.recent ) {
+            this.recent = {};
+            getEbirdObservations().then((ebird) => {
+                ebird.filter((ebird) => ebird.inat)
+                    .forEach(( match ) => {
+                        if (!this.recent[match.inat]) {
+                            this.recent[match.inat] = [];
+                        }
+                        this.recent[match.inat].push(
+                            {
+                                lat: match.lat,
+                                lng: match.lng,
+                                location: match.locName
+                            }
+                        );
+                    })
+            })
         }
         window.onpopstate = () => {
             this.seen = null;
