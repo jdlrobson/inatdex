@@ -116,7 +116,7 @@ const getEbirdObservations = () => {
         return data.filter((ebird) => {
             // Filter out hard to find things (need a boat)
             return ebird.locName && !ebird.locName.toLowerCase().match(
-                    /(auto selected|farallon islands)/
+                    /(auto selected|farallon islands|SEFI)/
                 // cross species are too complicated for now.
                 ) && ebird.speciesCode.charAt(0) !== 'x' &&
                 // make sure they are valid observations.
