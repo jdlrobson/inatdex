@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build":  "parcel build index.html",
+    "build": "parcel build index.html",
     "start": "parcel index.html"
   },
   "author": "",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@vue/component-compiler-utils": "3.2.2",
+    "less": "^4.1.1",
     "vue-template-compiler": "2.6.14"
   }
 }

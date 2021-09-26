@@ -1,9 +1,22 @@
 const cache = {};
 const ebirdToken = process.env.EBIRD;
-import ebirdToINat from './ebird-inat.json';
 const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
 import iNatToEbird from './inat-ebird.json';
 import iNatToWikidata from './inat-wikidata.json';
+import inatlogo from './inatlogo.png';
+
+const invertObj = (obj) => {
+    const newObj = {};
+    Object.keys(obj).forEach((key) => {
+        newObj[obj[key]] = key
+    });
+    return newObj;
+}
+const ebirdToINat = invertObj(iNatToEbird);
+// special cases:
+ebirdToINat['reevir1'] = 891704;
+
+const SF_PROJECT = 'birds-of-san-francisco-excluding-farallon-islands';
 
 const fetchCache = (url, options) => {
     if ( !cache[url] ) {
@@ -19,18 +32,58 @@ const getINatSpecies = ( project_id, username ) => {
         .then((r) => r.json())
         .then((data) => {
             data.results = data.results.map((d) => {
+                const ebird = iNatToEbird[d.taxon.id];
                 return Object.assign(
                 d,
-                {
-                    ebird: iNatToEbird[d.taxon.id]
-                })
+                { ebird })
             });
             return data;
         })
 };
 
 const getSpeciesInProject = ( project_id ) => {
+    const foundSpecies = [];
     return fetchCache(`${SPECIES_API}?project_id=${project_id}&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
+        .then((data) => {
+            if ( project_id === SF_PROJECT ) {
+                data.results.forEach((d) => {
+                    const ebird = iNatToEbird[d.taxon.id];
+                    foundSpecies.push( ebird );
+                });
+                return getEbirdObservations().then((d) => {
+                    const additionial = d.filter((ebird) =>
+                        !foundSpecies.includes(
+                            // Map to iNat and back again in case there are 2 ebird
+                            // species codes linked to subspecies.
+                            iNatToEbird[
+                                ebirdToINat[ebird.speciesCode]
+                            ]
+                        )
+                    );
+                    data.results = data.results.concat(
+                        additionial.map((ebirdObs) => {
+                            const id = ebirdObs.inat;
+                            const wikidata = iNatToWikidata[id];
+                            return {
+                                count: 0,
+                                taxon: {
+                                    preferred_common_name: ebirdObs.comName,
+                                    rank: 'species',
+                                    wikipedia_url: wikidata ?
+                                        `https://www.wikidata.org/wiki/${wikidata}` : undefined,
+                                    id,
+                                    default_photo: {
+                                        medium_url: inatlogo
+                                    }
+                                }
+                            }
+                        })
+                    )
+                    return data;
+                });
+            }
+            return data;
+        } );
 };
 
 const getUserId = ( username ) => {
@@ -65,11 +118,12 @@ const getEbirdObservations = () => {
             return ebird.locName && !ebird.locName.toLowerCase().match(
                     /(auto selected|farallon islands)/
                 // cross species are too complicated for now.
-                ) && ebird.speciesCode.charAt(0) !== 'x';
+                ) && ebird.speciesCode.charAt(0) !== 'x' &&
+                // make sure they are valid observations.
+                ebird.obsValid
         } ).map((ebird) => {
             if(!ebirdToINat[ebird.speciesCode]) {
-                console.log(ebird);
-                console.warn( `Missing ebird to iNat ${ebird.speciesCode}`)
+                console.warn( `Missing ebird to iNat ${ebird.speciesCode}.`)
             }
             return Object.assign(ebird, {
                 inat: ebirdToINat[ebird.speciesCode]
@@ -163,15 +217,6 @@ function loadWikidataIds( mode = 'wikidata' ) {
                         base,
                         Object.assign.apply(null, results)
                     );
-                if ( mode === 'ebird' ) {
-                    const ebirdToINat = {}
-                    Object.keys(newData).forEach((key) => {
-                        ebirdToINat[newData[key]] = key;
-                    });
-                    console.log(
-                        JSON.stringify(ebirdToINat)
-                    )
-                }
                 console.log(
                     JSON.stringify(newData)
                 )
@@ -181,6 +226,7 @@ function loadWikidataIds( mode = 'wikidata' ) {
 }
 
 export {
+    SF_PROJECT,
     loadWikidataIds,
     getEbirdObservations,
     getINatSpecies,

@@ -110,9 +110,9 @@
 import Species from './Species.vue';
 import Loader from './Loader.vue';
 import { getAvatar, getEbirdObservations,
+    SF_PROJECT,
     getINatSpecies, getSpeciesInProject
 } from './api.js';
-const SF_PROJECT = 'birds-of-san-francisco-excluding-farallon-islands';
 
 const getRarity = ( max, count ) => {
     const pc = Math.ceil( ( count / max ) * 100 );
@@ -172,7 +172,8 @@ export default {
             return `https://www.inaturalist.org/projects/${this.project_id}?tab=observers`;
         },
         rarity() {
-            return `${getHeader(this.totalLocalCount, this.count, this.max)}. Observed globally ${this.totalCount} times.`;
+            const globalStr = this.totalCount ? `Observed globally ${this.totalCount} times.` : '';
+            return `${getHeader(this.totalLocalCount, this.count, this.max)}. ${globalStr}`;
         },
         displayUsername() {
             return this.username === '~' ? 'your personal use' : this.username;
