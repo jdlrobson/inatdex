@@ -88,7 +88,7 @@
             <p>{{ seenMessage }}, {{ rarity }}</p>
             <a :href="url">View observations</a>
             <a :href="wikipedia">View on Wikipedia.org</a>
-            <div v-if="recent[selectedId]">
+            <div v-if="recent && recent[selectedId]">
                 Seen recently @
                 <a v-for="(recent, i) in recent[selectedId]"
                     :key="i"
@@ -254,7 +254,7 @@ export default {
                 navigator.geolocation.getCurrentPosition( ( location ) => {
                     const { latitude, longitude } = location.coords;
                     this.items = this.items.map((item) => {
-                        const recentObservations = this.recent[item.id];
+                        const recentObservations = this.recent && this.recent[item.id];
                         const recentObs = recentObservations &&
                             recentObservations[0];
                         if (!recentObs) {
