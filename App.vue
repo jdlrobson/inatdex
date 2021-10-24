@@ -202,11 +202,11 @@ export default {
         },
         filteredItems() {
             const searchTerm = this.filterName && this.filterName.toLowerCase();
-            return this.items.filter((item) =>
+            return this.items ? this.items.filter((item) =>
                 item.name && item.name.toLowerCase().indexOf( searchTerm ) > -1
             ).sort(
                 (r1, r2) => r1[this.sort] > r2[this.sort] ? this.sortDir : -this.sortDir
-            );
+            ) : [];
         },
         leaderboard() {
             return `https://www.inaturalist.org/projects/${this.project_id}?tab=observers`;
@@ -236,7 +236,7 @@ export default {
             return this.seen && this.items;
         },
         enabled() {
-            return this.username !== null && this.project_id;
+            return !!(this.username !== null && this.project_id);
         }
     },
     components: {
@@ -258,7 +258,7 @@ export default {
             this.sort = sort;
             this.sortDir = dir;
             if ( sort === 'nearby' ) {
-                navigator.geolocation.getCurrentPosition( ( location ) => {
+                getLocation().then(( location ) => {
                     const { latitude, longitude } = location.coords;
                     this.items = this.items.map((item) => {
                         const recentObservations = this.recent && this.recent[item.id];
@@ -487,7 +487,9 @@ export default {
                             }
                         );
                     })
-            })
+            }, () => {
+                this.recent = {};
+            });
         } else if ( this.project_id !== SF_PROJECT ) {
             this.recent = null;
         }
