@@ -48,7 +48,7 @@
                 :src="avatar" :alt="displayUsername">
             </avatar>
             <h3>{{ projectName }}</h3>
-            <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <a :href="leaderboard">📈</a></em>
+            <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <strong>{{percentSeen}}</strong> <a :href="leaderboard">📈</a></em>
         </header>
         <loader v-if="!items && enabled"></loader>
         <main v-if="items">
@@ -199,6 +199,11 @@ export default {
         };
     },
     computed: {
+        percentSeen() {
+            return this.seen && this.items ?
+                `(${Math.floor( ( this.seen.length / this.items.length ) * 100 )}%)` :
+                '';
+        },
         userUrl() {
             return `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&taxon_id=${this.selectedId}&user_id=${this.username}&verifiable=any`;
         },
