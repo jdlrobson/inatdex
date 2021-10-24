@@ -158,7 +158,7 @@ const getRarity = ( max, count ) => {
         case pc > 5:
             return `sometimes at this location`;
         case pc > 1:
-            return `unusual for this location ${pc}`;
+            return `unusual for this location`;
         default:
             return 'rare for this location';
     }
