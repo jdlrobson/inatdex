@@ -19,19 +19,45 @@ const ebirdToINat = invertObj(iNatToEbird);
 ebirdToINat['reevir1'] = 891704;
 
 const SF_PROJECT = 'birds-of-san-francisco-excluding-farallon-islands';
+const API_LOCAL_STORAGE_CACHE_KEY = 'api-cache';
+const LOCAL_STORAGE_CACHE_AGE_MINUTES = 10;
+
+const apiCache = localStorage.getItem( API_LOCAL_STORAGE_CACHE_KEY )
+if ( apiCache ) {
+    const apiCacheParsed = JSON.parse( apiCache );
+    Object.keys( apiCacheParsed ).forEach((key) => {
+        const item = apiCacheParsed[key];
+        const ageMinutes = ( new Date() - new Date( item.date ) ) / 1000 / 60;
+        if ( ageMinutes < LOCAL_STORAGE_CACHE_AGE_MINUTES ) {
+            cache[key] = Promise.resolve( item.json );
+        }
+    })
+} else {
+    localStorage.setItem( API_LOCAL_STORAGE_CACHE_KEY, '{}' );
+}
 
 const fetchCache = (url, options) => {
     if ( !cache[url] ) {
         cache[url] = fetch(url, options).then((r) => {
             return r.json();
-        });
+        }).then((json) => {
+            const lsCache = JSON.parse(
+                localStorage.getItem( API_LOCAL_STORAGE_CACHE_KEY )
+            );
+            lsCache[url] = {
+                json,
+                date: new Date()
+            };
+            // cache to localStorage
+            localStorage.setItem( API_LOCAL_STORAGE_CACHE_KEY, JSON.stringify(lsCache) );
+            return json;
+        })
     }
     return cache[url];
 };
 
 const getINatSpecies = ( project_id, username ) => {
-    return fetch(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
-        .then((r) => r.json())
+    return fetchCache(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
         .then((data) => {
             data.results = data.results.map((d) => {
                 const ebird = iNatToEbird[d.taxon.id];
