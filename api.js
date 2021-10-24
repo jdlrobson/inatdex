@@ -17,6 +17,7 @@ const invertObj = (obj) => {
 const ebirdToINat = invertObj(iNatToEbird);
 // special cases:
 ebirdToINat['reevir1'] = 891704;
+ebirdToINat['mewgul2'] = 471767;
 
 const SF_PROJECT = 'birds-of-san-francisco-excluding-farallon-islands';
 const API_LOCAL_STORAGE_CACHE_KEY = 'api-cache';
@@ -153,7 +154,7 @@ const getEbirdObservations = () => {
                 ebird.obsValid
         } ).map((ebird) => {
             if(!ebirdToINat[ebird.speciesCode]) {
-                console.warn( `Missing ebird to iNat ${ebird.speciesCode}.`)
+                console.warn( `Missing ebird to iNat ${ebird.speciesCode}. Usually indicates a species not recorded on iNat. Please edit manually.`)
             }
             return Object.assign(ebird, {
                 inat: ebirdToINat[ebird.speciesCode]
@@ -175,8 +176,12 @@ const getWikidataFromWikipedia = ( wikipediaTitle ) => {
         });
 };
 
-const getEbirdFromWikidata = ( qid ) => {
-    return fetchCache(`https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`)
+const getEbirdFromWikidata = ( qid, ignoreCache ) => {
+    let url = `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`;
+    if (ignoreCache) {
+        url += '?cache=' + Math.random();
+    }
+    return fetchCache(url)
         .then((data) => {
             const ebirdClaim = data.entities[qid].claims.P3444;
             if ( ebirdClaim ) {
@@ -191,9 +196,11 @@ const getEbirdFromWikidata = ( qid ) => {
 
 /**
  * Used by Jon for maintenance for populating the inat-wikidata.json
+ * Run loadWikidataIds() and follow instructions in console.
  */
-
 function loadWikidataIds( mode = 'wikidata' ) {
+    console.warn(`begin loadWikidataIds for mode ${mode}`);
+    let errors = 0;
     getSpeciesInProject('birds-of-san-francisco-excluding-farallon-islands').then((species) => {
         const promises = species.results
             .filter((m) => m.taxon.rank !== 'hybrid')
@@ -212,7 +219,8 @@ function loadWikidataIds( mode = 'wikidata' ) {
                         });
                     } else {
                         if (!wikidata ) {
-                            console.warn( `${m.taxon.preferred_common_name} (${id}) has no Wikipedia page (${wiki})` );
+                            console.warn( `[update script] ${m.taxon.preferred_common_name} (${id}) has no Wikipedia page (${wiki}). Manual edit required.` );
+                            errors += 1;
                         }
                         return Promise.resolve( {
                             [id]: wikidata
@@ -220,7 +228,9 @@ function loadWikidataIds( mode = 'wikidata' ) {
                     }
                 } else if ( mode === 'ebird' ) {
                     if ( wikidata === false ) {
-                        console.warn( `${m.taxon.preferred_common_name} (${id}) has no Wikidata`)
+                        console.warn( `[update script] ${m.taxon.preferred_common_name} (${id}) has no Wikidata. Manual edit required.`)
+                        errors += 1;
+
                         return Promise.resolve({
                             [id]: false
                         });
@@ -229,7 +239,7 @@ function loadWikidataIds( mode = 'wikidata' ) {
                             [id]: iNatToEbird[id]
                         });
                     } else {
-                        return getEbirdFromWikidata(wikidata).then((ebird) => {
+                        return getEbirdFromWikidata(wikidata, true).then((ebird) => {
                             return {
                                 [id]: ebird
                             }
@@ -241,15 +251,30 @@ function loadWikidataIds( mode = 'wikidata' ) {
             return Promise.all( promises ).then((results) => {
                 const base = mode === 'wikidata' ? iNatToWikidata
                     : iNatToEbird;
-
+                const file = mode === 'wikidata' ? 'inat-wikidata.json' : 'inat-ebird.json';
                 const newData = Object.assign(
                         {},
                         base,
                         Object.assign.apply(null, results)
                     );
-                console.log(
-                    JSON.stringify(newData)
-                )
+                if (
+                    Object.keys(newData).filter((key) => newData[key] !== false).length !==
+                    Object.keys(base).filter((key) => base[key] !== false).length
+                ) {
+                    console.log(`[update script] Changes detected. Please save the following to ${file} and refresh page:`)
+                    console.log(
+                        JSON.stringify(newData)
+                    )
+                } else if ( errors > 0 ) {
+                    console.log('[update script] Some entries require manual updates. See above.')
+                } else {
+                    if ( mode === 'wikidata' ) {
+                        console.log('[update script] Wikidata JSON up to date. Checking eBird to iNat mappings.');
+                        loadWikidataIds('ebird');
+                    } else {
+                        console.log('[update script] All JSONs are up to date.');
+                    }
+                }
             });
         }
     });
