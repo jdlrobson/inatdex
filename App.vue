@@ -44,6 +44,7 @@
         <header v-if="enabled">
             <h2>iNatdex for {{displayUsername}}</h2>
             <avatar
+                @click="resetProject"
                 :src="avatar" :alt="displayUsername">
             </avatar>
             <h3>{{ projectName }}</h3>
@@ -345,6 +346,12 @@ export default {
                 console.log('select', this.project_tmp);
                 this.project_id = this.project_tmp;
             }
+        },
+        resetProject() {
+            this.project_id = null;
+            this.items = null;
+            this.seen = null;
+            this.usernameSet = true;
         },
         getProjectName() {
             return this.project_id.replace(/-/g, ' ');
