@@ -91,8 +91,9 @@
         <footer v-if="selected && seen">
             <h2>{{ selected }}</h2>
             <p>{{ seenMessage }}, {{ rarity }}</p>
-            <a :href="url">View observations</a>
-            <a :href="wikipedia">View on Wikipedia.org</a>
+            <a :href="url" target="_blank">View all observations</a>
+            <a :href="userUrl" target="_blank">View observations by {{ username }}</a>
+            <a :href="wikipedia" target="_blank">View on Wikipedia.org</a>
             <div v-if="recent && recent[selectedId]">
                 Seen recently @
                 <a v-for="(recent, i) in recent[selectedId]"
@@ -197,6 +198,9 @@ export default {
         };
     },
     computed: {
+        userUrl() {
+            return `https://www.inaturalist.org/observations?place_id=any&project_id=${this.project_id}&taxon_id=${this.selectedId}&user_id=${this.username}&verifiable=any`;
+        },
         previousUsernames() {
             return previouslyUsedUsernames;
         },
