@@ -1,5 +1,5 @@
 <template>
-    <img width=50 height=50 @click="$emit('click')">
+    <img class="avatar" width=50 height=50 @click="$emit('click')">
 </template>
 <script>
 export default {

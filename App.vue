@@ -523,6 +523,10 @@ export default {
     text-align: center;
 }
 
+.avatar {
+    cursor: pointer;
+}
+
 header {
     position: sticky;
     width: 100%;
@@ -693,6 +697,7 @@ footer > a {
 }
 
 .footer-close {
+    cursor: pointer;
     position: absolute;
     right: 8px;
     top: 8px;

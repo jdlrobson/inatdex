@@ -61,6 +61,7 @@ export default {
 
 <style lang="less" scoped>
 .species {
+    cursor: pointer;
     position: relative;
 }
 
