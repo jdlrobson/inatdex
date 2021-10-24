@@ -1,9 +1,11 @@
 const cache = {};
 const ebirdToken = process.env.EBIRD;
-const SPECIES_API = 'https://api.inaturalist.org/v1/observations/species_counts';
+const API_HOST = 'https://api.inaturalist.org/v1';
+const SPECIES_API = `${API_HOST}/observations/species_counts`;
 import iNatToEbird from './inat-ebird.json';
 import iNatToWikidata from './inat-wikidata.json';
 import inatlogo from './inatlogo.png';
+import { getLocation } from './geo.js';
 
 const invertObj = (obj) => {
     const newObj = {};
@@ -80,6 +82,8 @@ const getSpeciesInProject = ( project_id ) => {
                         })
                     )
                     return data;
+                }, () => {
+                    return Promise.resolve( data );
                 });
             }
             return data;
@@ -225,9 +229,32 @@ function loadWikidataIds( mode = 'wikidata' ) {
     });
 }
 
+const getProjects = () => {
+    return getLocation().then((location) => {
+        const { latitude, longitude } = location.coords;
+        // San Francisco
+        if ( latitude > 36 && latitude < 39 && longitude < -121 && longitude > -123 ) {
+           return Promise.resolve( [
+                { id: 'birds-of-san-francisco-excluding-farallon-islands', title:'All San Francisco' },
+                { id: 'birds-of-san-francisco-botanical-garden', title: 'Botanical Gardens' },
+                { id: 'birds-of-ocean-beach', title: 'Ocean Beach' },
+                { id: 'animals-of-lands-end-san-francisco', title: 'Lands End' },
+                { id: 'birds-of-presidio', title: 'Birds of the Presidio' },
+                { id: 'birds-of-fort-mason', title: 'Fort Mason' },
+                { id: 'birds-of-golden-gate-park', title: 'Birds of Golden Gate Park' },
+                { id: 'animals-of-mount-sutro', title: 'Mount Sutro' },
+                { id: 'birds-of-lake-merced', title: 'Lake Merced' },
+            ] );
+        } else {
+            return Promise.resolve( [] );
+        }
+    });
+}
 export {
+    getProjects,
     SF_PROJECT,
     loadWikidataIds,
+    getLocation,
     getEbirdObservations,
     getINatSpecies,
     getSpeciesInProject,

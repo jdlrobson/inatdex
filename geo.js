@@ -16,6 +16,17 @@ function deg2rad(deg) {
     return deg * (Math.PI/180)
 }
 
+const getLocation = () => {
+  return new Promise( (resolve, reject) => {
+      navigator.geolocation.getCurrentPosition( function ( result ) {
+          resolve( result );
+      }, function () {
+          reject();
+      } )
+  })
+}
+
 export {
+    getLocation,
     getDistanceFromLatLonInKm
 };

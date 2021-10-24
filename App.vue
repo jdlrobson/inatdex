@@ -22,18 +22,23 @@
             </div>
             <div v-if="usernameSet && !project_id">
                 <p>Let's create an iNatDex (checklist) for {{username}}.</p>
-                <label class="label-input">Which San Francisco project shall we use?</label>
-                <button data-id="birds-of-san-francisco-excluding-farallon-islands" @click="selectProject">All San Francisco</button>
-                <button data-id="birds-of-san-francisco-botanical-garden" @click="selectProject">Botanical Gardens</button>
-                <button data-id="birds-of-ocean-beach" @click="selectProject">Ocean Beach</button>
-                <button data-id="animals-of-lands-end-san-francisco" @click="selectProject">Lands End</button>
-                <button data-id="birds-of-presidio" @click="selectProject">Birds of the Presidio</button>
-                <button data-id="birds-of-fort-mason" @click="selectProject">Fort Mason</button>
-                <button data-id="birds-of-golden-gate-park" @click="selectProject">Birds of Golden Gate Park</button>
-                <button data-id="animals-of-mount-sutro" @click="selectProject">Mount Sutro</button>
-                <button data-id="birds-of-lake-merced" @click="selectProject">Lake Merced</button>
-                <p class="footer-text">If you live outside San Francisco and want to include your own place, drop me a mail
-                    at jdlrobson@gmail.com</p>
+                <label class="label-input">Which project shall we use?</label>
+                <div v-if="!userProjects">
+                    Finding projects near your current location...
+                </div>
+                <div v-else>
+                    <div v-if="userProjects.length">
+                        <button v-for="project in userProjects"
+                            :key="'project-btn-'+project.id"
+                            :data-id="project.id"
+                            @click="selectProject">{{project.title}}</button>
+                    </div>
+                    <div v-else>
+                        Enter project id:
+                        <input v-model="project_tmp">
+                        <button @click="selectProject">select</button>
+                    </div>
+                </div>
             </div>
         </form>
         <header v-if="enabled">
@@ -122,7 +127,7 @@ import Species from './Species.vue';
 import Loader from './Loader.vue';
 import Avatar from './Avatar.vue';
 import { getDistanceFromLatLonInKm } from './geo.js';
-import { getAvatar, getEbirdObservations,
+import { getAvatar, getEbirdObservations, getProjects,
     SF_PROJECT,
     getINatSpecies, getSpeciesInProject
 } from './api.js';
@@ -167,6 +172,8 @@ export default {
     name: 'App',
     data() {
         return {
+            project_tmp: null,
+            userProjects: null,
             recent: null,
             avatar: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
             filterName: '',
@@ -299,7 +306,16 @@ export default {
             const isDuplicate = ( username ) => {
                 return previouslyUsedUsernames.filter( user => user.name === username ).length > 0;
             }
-            if ( username !== '~' && !this.usernameSet && !isDuplicate( username ) ) {
+            if ( username === '~' ) {
+                this.usernameSet = true;
+                return;
+            }
+            getProjects().then((projects) => {
+                this.userProjects = projects;
+            }, () => {
+                this.userProjects = [];
+            });
+            if ( !this.usernameSet && !isDuplicate( username ) ) {
                 getAvatar( username ).then((avatar) => {
                     if ( !avatar ) {
                         return;
@@ -320,6 +336,10 @@ export default {
             const project = ev.target.dataset.id;
             if ( project ) {
                 this.project_id = project;
+            }
+            if ( this.project_tmp ) {
+                console.log('select', this.project_tmp);
+                this.project_id = this.project_tmp;
             }
         },
         getProjectName() {
