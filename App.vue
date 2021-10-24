@@ -324,14 +324,14 @@ export default {
                     if ( !avatar ) {
                         return;
                     }
-                    previouslyUsedUsernames.push( {
-                        name: username,
-                        avatar
-                    } );
                     // check again in case this method was called twice.
                     if ( !isDuplicate( username ) ) {
-                        localStorage.setItem(LS_USERNAMES, JSON.stringify(previouslyUsedUsernames));
+                        previouslyUsedUsernames.push( {
+                            name: username,
+                            avatar
+                        } );
                     }
+                    localStorage.setItem(LS_USERNAMES, JSON.stringify(previouslyUsedUsernames));
                 } );
             }
             this.usernameSet = true;
