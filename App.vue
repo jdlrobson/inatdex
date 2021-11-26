@@ -131,7 +131,7 @@ import Avatar from './Avatar.vue';
 import { getDistanceFromLatLonInKm } from './geo.js';
 import { getAvatar, getEbirdObservations, getProjects,
     SF_PROJECT,
-    getINatSpecies, getSpeciesInProject
+    getINatSpeciesForUser, getSpeciesInProject
 } from './api.js';
 const LS_USERNAMES = 'my-users-local';
 
@@ -395,7 +395,7 @@ export default {
             if ( !project_id || !username ) {
                 return;
             }
-            return getINatSpecies( project_id, username )
+            return getINatSpeciesForUser( project_id, username )
                 .then((r) => {
                     return r.results.map((r) => {
                         return r.taxon.preferred_common_name;

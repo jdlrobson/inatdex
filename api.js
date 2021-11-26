@@ -57,24 +57,50 @@ const fetchCache = (url, options) => {
     return cache[url];
 };
 
-const getINatSpecies = ( project_id, username ) => {
-    return fetchCache(`${SPECIES_API}?verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
-        .then((data) => {
-            data.results = data.results.map((d) => {
+const getINatSpeciesForUserInternal = ( project_id, username, page, data = null ) => {
+    if ( data == null ) {
+        data = {
+            results: []
+        };
+    }
+    return fetchCache(`${SPECIES_API}?page=${page}&verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
+        .then((pageData) => {
+            const finalPass = pageData.per_page !== pageData.results.length;
+            const newPages = pageData.results.map((d) => {
                 const ebird = iNatToEbird[d.taxon.id];
                 return Object.assign(
                 d,
                 { ebird })
             });
-            return data;
+            data.results = data.results.concat( newPages );
+            return finalPass ? data : getSpeciesInProjectInternal(
+                project_id,
+                username,
+                page + 1,
+                data
+            );
         })
 };
 
-const getSpeciesInProject = ( project_id ) => {
+const getINatSpeciesForUser = ( project_id, username ) => {
+    return getINatSpeciesForUserInternal( project_id, username, 1 );
+};
+
+const getSpeciesInProjectInternal = ( project_id, page, data = null ) => {
+    if ( data === null ) {
+        data = {
+            results: []
+        };
+    }
     const foundSpecies = [];
-    return fetchCache(`${SPECIES_API}?project_id=${project_id}&back=10&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
-        .then((data) => {
-            if ( project_id === SF_PROJECT ) {
+    return fetchCache(`${SPECIES_API}?page=${page}&project_id=${project_id}&back=10&ttl=900&v=1630551347000&preferred_place_id=&locale=en`)
+        .then((pageData) => {
+            const finalPass = pageData.per_page !== pageData.results.length;
+            data.results = data.results.concat(
+                pageData.results
+            );
+
+            if ( finalPass && project_id === SF_PROJECT ) {
                 data.results.forEach((d) => {
                     const ebird = iNatToEbird[d.taxon.id];
                     foundSpecies.push( ebird );
@@ -113,8 +139,16 @@ const getSpeciesInProject = ( project_id ) => {
                     return Promise.resolve( data );
                 });
             }
-            return data;
+            return finalPass ? data : getSpeciesInProjectInternal(
+                project_id,
+                page + 1,
+                data
+            );
         } );
+};
+
+const getSpeciesInProject = ( project_id ) => {
+    return getSpeciesInProjectInternal( project_id, 1, null );
 };
 
 const getUserId = ( username ) => {
@@ -295,6 +329,7 @@ const getProjects = () => {
                 { id: 'birds-of-golden-gate-park', title: 'Birds of Golden Gate Park' },
                 { id: 'animals-of-mount-sutro', title: 'Mount Sutro' },
                 { id: 'birds-of-lake-merced', title: 'Lake Merced' },
+                { id: 'birds-of-california', title: 'Birds of California'}
             ] );
         } else {
             return Promise.resolve( [] );
@@ -307,7 +342,7 @@ export {
     loadWikidataIds,
     getLocation,
     getEbirdObservations,
-    getINatSpecies,
+    getINatSpeciesForUser,
     getSpeciesInProject,
     getUserId, fetchCache, getAvatar
 };
