@@ -1,9 +1,16 @@
 <template>
-    <img class="avatar" width=50 height=50 @click="$emit('click')">
+    <img class="avatar" width=50 height=50
+        @error="onError"
+        @click="$emit('click')">
 </template>
 <script>
 export default {
-    name: 'Avatar'
+    name: 'Avatar',
+    methods: {
+        onError(e) {
+            e.target.src = e.target.src.replace(/jpeg/, 'jpg?440034');
+        }
+    }
 }
 </script>
 
