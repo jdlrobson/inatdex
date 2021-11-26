@@ -1,5 +1,5 @@
 <template>
-    <div class="species" @click="clicked">
+    <div :class="speciesClass" @click="clicked">
         <div
             v-if="recent && !seen"
             :class="recentClasses" title="Seen recently">!</div>
@@ -33,6 +33,11 @@ export default {
                 'species__recent--seen': this.invertHighlight ? !this.seen : this.seen
 
             }
+        },
+        speciesClass() {
+            return {
+                species: true
+            };
         },
         photoClasses() {
             return {

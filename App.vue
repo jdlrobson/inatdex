@@ -42,10 +42,11 @@
             </div>
         </form>
         <header v-if="enabled">
-            <h2>iNatdex for {{displayUsername}}</h2>
+            <h2>iNatdex for {{displayUsername}} <span v-if="compare">x {{ compare }} </span></h2>
             <avatar
                 @click="resetProject"
                 :src="avatar" :alt="displayUsername">
+            </avatar>
             </avatar>
             <h3>{{ projectName }}</h3>
             <em v-if="items">Seen: {{ seen ? seen.length : '_' }} / {{ items.length }} <strong>{{percentSeen}}</strong> <a :href="leaderboard">📈</a></em>
@@ -84,6 +85,8 @@
                     :count="item.count"
                     :total-count="item.totalCount"
                     :wikipedia="item.wikipedia"
+                    :class="compareSeen && compareSeen.includes(item.name) ?
+                        'also-seen' : ''"
                     :seen="seen && seen.includes(item.name)"
                     :photo="item.photo"
                 ></species>
@@ -177,6 +180,7 @@ export default {
             project_tmp: null,
             userProjects: null,
             recent: null,
+            compare: null,
             avatar: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
             filterName: '',
             invertHighlight: false,
@@ -195,6 +199,7 @@ export default {
             username: null,
             items: null,
             project_id: null,
+            compareSeen: null,
             seen: null
         };
     },
@@ -356,6 +361,7 @@ export default {
             this.project_id = null;
             this.items = null;
             this.seen = null;
+            this.compareSeen = null;
             this.usernameSet = true;
         },
         getProjectName() {
@@ -402,6 +408,16 @@ export default {
                     });
                 }).then((names) => {
                     this.seen = names;
+                    if ( this.compare ) {
+                        return getINatSpeciesForUser( project_id, this.compare )
+                            .then((r) => {
+                                return r.results.map((r) => {
+                                    return r.taxon.preferred_common_name;
+                                });
+                            }).then((names) => {
+                                this.compareSeen = names;
+                            });
+                    }
                 });
         },
         reset() {
@@ -452,6 +468,12 @@ export default {
             } else {
                 this.username = null;
             }
+            const compare = location.search.match(/compare=([^&]*)/);
+            if ( compare && compare[1] !== 'null' ) {
+                this.compare = compare[1];
+            } else {
+                this.compare = null;
+            }
 
             if ( this.project_id && !this.username ) {
                 this.username = '~';
@@ -466,8 +488,12 @@ export default {
     updated() {
         const project_fragment = this.project_id ? `project_id=${this.project_id}` : '';
         const username_fragment = this.username ? `username=${this.username}` : '';
-        const url = project_fragment && username_fragment ?
+        const compare_fragment = this.compare ? `&compare=${this.compare}` : '';
+        let url = project_fragment && username_fragment ?
             `?${project_fragment}&${username_fragment}` : `?${project_fragment}${username_fragment}`;
+        if ( compare_fragment ) {
+            url += compare_fragment;
+        }
         if (
             (
                 project_fragment && window.location.search.indexOf( 'project_id' ) === -1
@@ -523,7 +549,11 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+.also-seen img {
+    border: solid 5px red;
+}
+
 .app {
     text-align: center;
 }
