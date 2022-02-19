@@ -14,10 +14,21 @@ const invertObj = (obj) => {
     });
     return newObj;
 }
-const ebirdToINat = invertObj(iNatToEbird);
+
 // special cases:
-ebirdToINat['reevir1'] = 891704;
-ebirdToINat['mewgul2'] = 471767;
+const ebirdSpecialCases = {
+    reevir1: 891704,
+    mewgul: 471767,
+    mewgul2: 471767,
+    whwsco2:  144222,
+    whwdov: 3460,
+    y00478: 471767
+};
+
+const ebirdToINat = Object.assign(
+    invertObj(iNatToEbird),
+    ebirdSpecialCases
+);
 
 const SF_PROJECT = 'birds-of-san-francisco-excluding-farallon-islands';
 const API_LOCAL_STORAGE_CACHE_KEY = 'api-cache';
@@ -106,7 +117,13 @@ const getSpeciesInProjectInternal = ( project_id, page, data = null ) => {
                     foundSpecies.push( ebird );
                 });
                 return getEbirdObservations().then((d) => {
-                    const additionial = d.filter((ebird) =>
+                    const additionial = d.map((ebird) => {
+                        const specialCase = ebirdSpecialCases[ebird.speciesCode];
+                        if ( specialCase ) {
+                            ebird.speciesCode = iNatToEbird[specialCase]
+                        }
+                        return ebird;
+                    } ).filter((ebird) =>
                         !foundSpecies.includes(
                             // Map to iNat and back again in case there are 2 ebird
                             // species codes linked to subspecies.
