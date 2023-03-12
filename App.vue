@@ -432,8 +432,11 @@ export default {
         loadSpecies( project_id ) {
             return getSpeciesInProject( project_id )
                 .then((d) => {
-                    return d.results.map((r) => {
+                    return d.results.filter(
+                        (d) => !d.current_synonymous_taxon_ids || !d.current_synonymous_taxon_ids.length
+                    ).map((r) => {
                         const taxon = r.taxon;
+                        const photo = taxon.default_photo;
                         return {
                             id: '' + r.taxon.id,
                             nearby: 0,
@@ -443,7 +446,7 @@ export default {
                             totalCount: taxon.observations_count,
                             wikipedia: taxon.wikipedia_url,
                             name: taxon.preferred_common_name,
-                            photo: taxon.default_photo.medium_url
+                            photo: photo ? photo.medium_url : null
                         }
                     });
                 }).then((items) => {
