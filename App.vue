@@ -27,14 +27,23 @@
                     Finding projects near your current location...
                 </div>
                 <div v-else>
-                    <div v-if="userProjects.length">
-                        <button v-for="project in userProjects"
+                    <div v-if="userCountries.length">
+                        <h2>find a project in a specific country</h2>
+                        <button v-for="country in userCountries"
+                            :key="'project-btn-'+country"
+                            :data-id="country"
+                            @click="selectCountry">{{country}}</button>
+                    </div>
+                    <h2 v-if="country">projects</h2>
+                    <div v-if="country">
+                        <button v-for="project in filteredUserProjects"
                             :key="'project-btn-'+project.id"
                             :data-id="project.id"
                             @click="selectProject">{{project.title}}</button>
                     </div>
-                    <div v-else>
-                        Enter project id:
+                    <hr>
+                    <div>
+                        <div>Enter project id:</div>
                         <input v-model="project_tmp">
                         <button @click="selectProject">select</button>
                     </div>
@@ -179,6 +188,10 @@ export default {
         return {
             project_tmp: null,
             userProjects: null,
+            userCountries: [],
+            userRegions: [],
+            country: null,
+            region: null,
             recent: null,
             compare: null,
             avatar: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
@@ -204,6 +217,9 @@ export default {
         };
     },
     computed: {
+        filteredUserProjects() {
+            return this.userProjects.filter((a) => a.country === this.country);
+        },
         percentSeen() {
             return this.seen && this.items ?
                 `(${Math.floor( ( this.seen.length / this.items.length ) * 100 )}%)` :
@@ -327,6 +343,12 @@ export default {
             }
             getProjects().then((projects) => {
                 this.userProjects = projects;
+                this.userRegions = Array.from(
+                    new Set( projects.map( ( p ) => p.region ) )
+                );
+                this.userCountries = Array.from(
+                    new Set( projects.map( ( p ) => p.country ) )
+                );
             }, () => {
                 this.userProjects = [];
             });
@@ -346,6 +368,12 @@ export default {
                 } );
             }
             this.usernameSet = true;
+        },
+        selectCountry(ev) {
+            const country = ev.target.dataset.id;
+            if ( country ) {
+                this.country = country;
+            }
         },
         selectProject(ev) {
             const project = ev.target.dataset.id;
