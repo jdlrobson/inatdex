@@ -333,6 +333,7 @@ function loadWikidataIds( mode = 'wikidata' ) {
 
 const getProjects = () => {
     return Promise.resolve( [
+        { id: 'birds-of-united-kingdom', title: 'Birds of the UK', country: 'UK' },
         { id: 'birds-of-san-francisco-excluding-farallon-islands', title:'All San Francisco', country: 'USA', region: 'California'  },
         { id: 'birds-of-san-francisco-botanical-garden', title: 'Botanical Gardens', country: 'USA', region: 'California'  },
         { id: 'birds-of-ocean-beach', title: 'Ocean Beach', country: 'USA', region: 'California'  },
