@@ -416,14 +416,18 @@ export default {
         loadSeenByUser() {
             const project_id = this.project_id;
             const username = this.username;
+            const localStorageSeen = JSON.parse(
+                localStorage.getItem( 'seen-' + project_id ) || '[]'
+            );
             if ( username === '~' ) {
-                this.seen = JSON.parse(
-                    localStorage.getItem( 'seen-' + project_id ) || '[]'
-                );
+                this.seen = localStorageSeen
                 return;
             } else {
                 getAvatar( username ).then((avatar) => {
                     this.avatar = avatar;
+                }, () => {
+                    this.username = '~';
+                    this.seen = localStorageSeen
                 });
             }
             if ( !project_id || !username ) {

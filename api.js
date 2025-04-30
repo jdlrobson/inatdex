@@ -77,6 +77,9 @@ const getINatSpeciesForUserInternal = ( project_id, username, page, data = null 
     }
     return fetchCache(`${SPECIES_API}?page=${page}&verifiable=true&project_id=${project_id}&user_id=${username}&locale=en`)
         .then((pageData) => {
+            if ( pageData.error ) {
+                return data;
+            }
             const finalPass = pageData.per_page !== pageData.results.length;
             const newPages = pageData.results.map((d) => {
                 const ebird = iNatToEbird[d.taxon.id];
