@@ -28,7 +28,7 @@
                 </div>
                 <div v-else>
                     <div v-if="userCountries.length">
-                        <h2>find a project in a specific country</h2>
+                        <h2>find a project in a specific country or region</h2>
                         <button v-for="country in userCountries"
                             :key="'project-btn-'+country"
                             :data-id="country"

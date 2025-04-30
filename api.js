@@ -6,6 +6,7 @@ import iNatToEbird from './inat-ebird.json';
 import iNatToWikidata from './inat-wikidata.json';
 import inatlogo from './inatlogo.png';
 import { getLocation } from './geo.js';
+import PROJECTS from './projects.json';
 
 const invertObj = (obj) => {
     const newObj = {};
@@ -332,20 +333,7 @@ function loadWikidataIds( mode = 'wikidata' ) {
 }
 
 const getProjects = () => {
-    return Promise.resolve( [
-        { id: 'birds-of-united-kingdom', title: 'Birds of the UK', country: 'UK' },
-        { id: 'birds-of-san-francisco-excluding-farallon-islands', title:'All San Francisco', country: 'USA', region: 'California'  },
-        { id: 'birds-of-san-francisco-botanical-garden', title: 'Botanical Gardens', country: 'USA', region: 'California'  },
-        { id: 'birds-of-ocean-beach', title: 'Ocean Beach', country: 'USA', region: 'California'  },
-        { id: 'animals-of-lands-end-san-francisco', title: 'Lands End', country: 'USA', region: 'California'  },
-        { id: 'birds-of-presidio', title: 'Birds of the Presidio', country: 'USA', region: 'California'  },
-        { id: 'birds-of-fort-mason', title: 'Fort Mason', country: 'USA', region: 'California'  },
-        { id: 'birds-of-golden-gate-park', title: 'Birds of Golden Gate Park', country: 'USA', region: 'California'  },
-        { id: 'animals-of-mount-sutro', title: 'Mount Sutro', country: 'USA', region: 'California'  },
-        { id: 'birds-of-lake-merced', title: 'Lake Merced', country: 'USA', region: 'California'  },
-        { id: 'birds-of-california', title: 'Birds of California', country: 'USA', region: 'California' },
-        { id: 'singapore-birds', title: 'Birds of Singapore', country: 'Singapore', region: 'Singapore' }
-    ] );
+    return Promise.resolve( PROJECTS );
 }
 export {
     getProjects,
