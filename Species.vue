@@ -1,5 +1,6 @@
 <template>
     <div :class="speciesClass" @click="clicked">
+        <span class="species__text">{{ name }}</span>
         <div
             v-if="recent && !seen"
             :class="recentClasses" title="Seen recently">!</div>
@@ -68,6 +69,13 @@ export default {
 .species {
     cursor: pointer;
     position: relative;
+}
+
+.species__text {
+    color: transparent;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
 .species__photo {
